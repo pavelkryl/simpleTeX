@@ -1,0 +1,350 @@
+\LoadPackage{styles}
+
+%% !necessary environment for the document!
+\CreateNewEnvironment{Document}{}{}% PREACTIONS: setting core TeX parameters according to set DOC parameters
+
+%% Doc params can be set before \Begin{Document}, handlers of three types can be
+% associated with these params:
+% 1. immediate handler: invoked immediately when the param is set, associate handler using:
+
+%		SetDocParamImmHandler[#1]#2 - where 1:ParamName, 2:HandlingRoutine on begin
+
+% 2. prehandler performed when \Begin{Document} is found, set handler using:
+
+%		\SetDocParamPreHandler[#1]#2 - where 1:ParamName, 2:HandlingRoutine on begin
+
+% 3. posthandler performed when \End{Document} is found, set handler using:
+
+%		\SetDocParamPostHandler[#1]#2 - where 1:ParamName, 2:HandlingRoutine on end
+
+% the handling routine is macro accepting one parameter (= value of the
+% parameter),
+
+% in case of pre and post handlers, the routine is appended immediately to
+% \Begin{Document} actions; multiple handlers associations of the same attribute
+% will lead to double invocation of (possibly different) handler routines
+% sequentially in textual order as they were associated
+
+%% declares document parameter along with handling PRE routine, params:
+% 1 - document parameter name
+% 2 - routine handling beginning (macro accepting one argument - value of the parameter)
+%	its body is remebered!, not the name
+\def\SetDocParamPreHandler[#1]#2{{%
+	\def\tmpA{Document[PreActions]<}%
+	\ex\ex\ex\PostfixEnviParam\ex\tmpA\ex{#2{\GetDocParam[#1]}\DPRINT{DOCparam	#1 set}}%
+}}
+	
+
+%% declares document parameter along with handling POST routine, params:
+% 1 - document parameter name
+% 2 - routine handling end (macro accepting one argument)
+%	its body is remebered!, not the name
+\def\SetDocParamPostHandler[#1]#2{{%
+	\def\tmpA{Document[PostActions]<}%
+	\ex\ex\ex\PrefixEnviParam\ex\tmpA\ex{#2{\GetDocParam[#1]}}%
+}}
+
+%% associates immediate handler with given DOC param, params:
+% 1 - document parameter name
+% 2 - routine handling setting of a parameter - it is invoked each time a value
+% is asigned to the doc par
+\def\SetDocParamImmHandler[#1]#2{%
+	%\DPRINT{setting imm handler for #1 as \string#2}%
+	\ex\global\ex\let\csname DOCParam::ImmHandler::#1\endcsname=#2%
+}
+
+%%	sets one of document's parameter, params:
+% 1 - param name:
+%		- font
+%		- magnification
+%		- left margin
+%		- top margin, left margin
+%		- width, height
+%		- page numbering
+% 2 - param value:
+%		- font created by MkFontTenAlias, MkFontName
+%		- \magstephalf, 1000, \magstep1, \magstep2,.. 6
+%		- margins and lengths in measure units
+%		- page numbering: YES, NO
+\def\SetDocParam[#1]=#2{\TryDocParamImmHandler[#1]{#2}\SetDocVar #1={#2}}%
+\def\eSetDocParam[#1]=#2{%
+	\edef\hlpD{#2}%
+	\def\hlpZ{\TryDocParamImmHandler[#1]}%
+	\ex\hlpZ\ex{\hlpD}\eSetDocVar #1={#2}%
+	\let\hlpD=\undef}%
+
+%\csname SetDOCp@r@m::#1\endcsname}%
+%\def\eSetDocParam[#1]={\csname eSetDOCp@r@m::#1\endcsname}%
+
+%% tries to invoke immediate handler of DOC param, the immendiate handler is a
+% macro with name DocParam'name'ImmHandler, e.g. DocParamTextWidthImmHandler for
+% handler invoked immediately each time TextWidth is set, value to be assigned
+% is passed to the handler, params:
+% 1 - name of the doc param associated with the handler
+% 2 - value to be assigned - it is not yet assigned, but it will after the
+% handler is invoked
+\def\TryDocParamImmHandler[#1]#2{%
+	\DPRINT{trying imm handler for param[#1] for value #2}%
+	\ex\ifx\csname DOCParam::ImmHandler::#1\endcsname\relax
+		\DPRINT{... no imm handler}%
+		\else
+		\DPRINT{... imm handler found, invoking\newlinechar}%
+		\csname DOCParam::ImmHandler::#1\endcsname{#2}%
+	\fi
+}
+
+%% returns current value of DOC param
+\def\GetDocParam[#1]{\GetDocVar{#1}}%
+
+%% if doc param is set, params:
+% 1 - which doc param are we testing
+% 2 - then text
+% 3 - else text
+\def\IfSetDocParam#1#2#3{\IfSetDocVar{#1}{#2}{#3}}%
+
+
+%% binds name to plain TeX register, params:
+% 1 - name
+% 2 - binded plain TeX register (CS)
+\def\BindNameToReg#1#2{\ex\def\csname name2reg#1\endcsname{#2}}%
+\BindNameToReg{Magnification}{\mag}%
+\BindNameToReg{PageLeftMargin}{\hoffset}%
+\BindNameToReg{PageTopMargin}{\voffset}%
+\BindNameToReg{TextWidth}{\hsize}%
+\BindNameToReg{TextHeight}{\vsize}%
+\BindNameToReg{FirstLineIndent}{\parindent}%
+\BindNameToReg{ParSpacing}{\parskip}%
+\BindNameToReg{TopSkip}{\topskip}%
+\BindNameToReg{InterLinePenalty}{\interlinepenalty}
+\BindNameToReg{LineSkipLimit}{\lineskiplimit}
+\BindNameToReg{BaseLineSkip}{\baselineskip}
+
+%% sets value of associated plain TeX register to value taken from DOC param,
+%% params:
+% 1 - prefix to be used before assigment (may be global)
+% 2 - name of the DOC param
+\gdef\SetBoundReg#1#2{%
+%\message{setting register \GetBoundReg{#2} to \GetDocVar{#2}, before ass: \the\GetBoundReg{#2}}%
+#1\GetBoundReg{#2}=\GetDocVar{#2}%
+%\message{after ass: \the\GetBoundReg{#2}}%
+}%
+
+%% returns previously bound register, params:
+% 1 - name to which the register has been bound (BindNameToReg)
+\def\GetBoundReg#1{\csname name2reg#1\endcsname}%
+
+%% document parameters:
+%% - main font (see MkFontTenAlias)
+%% - alignment
+%% - document magnification
+%% - left + top margin (hoffset + voffset)
+%% - width + height
+%% - page numbering
+%% common text params:
+%% - first line indent
+%% - paragraph spacing
+%% - line spacing
+
+%{\catcode`\@=12%
+%% sets value of document variable, params:
+% 1 - doc variable name
+% 2 - variable value
+\long\gdef\SetDocVar#1=#2{\SetVar{DOC::#1}{#2}}%
+\gdef\eSetDocVar#1=#2{\eSetVar{DOC::#1}{#2}}%
+\gdef\GetDocVar#1{\GetVar{DOC::#1}}%
+\gdef\IfSetDocVar#1#2#3{\IfSetVar{DOC::#1}{#2}{#3}}%
+
+%% declares DOC param binded to certain plain TeX register, the handler is
+% therefore general and simple, it also intializes value of the param to current
+% value stored in the TeX register, params:
+% 1 - DOCparam name
+% 2 - prefix before assignment (may be \global or empty)
+\def\DeclareRegBoundDocParam[#1]#2{{%
+	\def\tmpB##1{\SetBoundReg{#2}{#1}}% macro ignores given value, wants to know the name
+	\SetDocParamPreHandler[#1]\tmpB%
+	% initialization to recent value
+	\eSetDocParam[#1]={\the\GetBoundReg{#1}}}}%
+
+%% declares DOC param binded to certain plain TeX register, but each time,
+% new value is about to be assigned, the new value to the register given amount is added, params:
+% 1 - DOCparam name
+% 2 - prefix before assignment (may be \global or empty)
+% 3 - amount to be added
+\def\DeclareRegBoundAddDocParam[#1]#2#3{{%
+	\def\tmpB##1{%
+		\SetBoundReg{#2}{#1}%
+		#2\advance\GetBoundReg{#1} by#3}% macro ignores given value, wants to know the name
+	\SetDocParamPreHandler[#1]\tmpB%
+	% initialization to recent value
+	\eSetDocParam[#1]={\the\GetBoundReg{#1}}}}%
+
+\topskip=14pt
+%% defining params binded with some plain TeX register
+\DeclareRegBoundDocParam[Magnification]\global%
+\DeclareRegBoundAddDocParam[PageLeftMargin]\global{-1truein}%
+\DeclareRegBoundAddDocParam[PageTopMargin]\global{-1truein}%
+\DeclareRegBoundDocParam[TextWidth]\global%
+\DeclareRegBoundDocParam[TextHeight]\global
+\DeclareRegBoundDocParam[FirstLineIndent]{}%
+\DeclareRegBoundDocParam[ParSpacing]{}%
+\DeclareRegBoundDocParam[TopSkip]{}%
+\DeclareRegBoundDocParam[InterLinePenalty]{}%
+\DeclareRegBoundDocParam[LineSkipLimit]{}%
+\DeclareRegBoundDocParam[BaseLineSkip]{}%
+
+%% declares DOC param bound, params:
+% 1 - param name
+% 2 - bounded token register
+% 3 - prefix (may be \global or nothiog)
+\def\DeclareTokenRegBoundDocParam#1#2#3{{%
+	\def\tmpB##1{#3#2={##1}}%
+	\SetDocParamPreHandler[#1]\tmpB%
+	% initialize to current content
+	\eSetDocParam[#1]={\the#2}}}%
+
+
+%% headers and footers
+\DeclareTokenRegBoundDocParam{Header}{\headline}\global%
+\DeclareTokenRegBoundDocParam{Footer}{\footline}\global%
+
+%%%% header related DOC params and vars
+\SetDocParam[Header]={%
+	\IfVar DOC::Header:Show='YES'{%
+		\GetDocVar{Header:Box}%
+		\IfVar DOC::Header:Abolish='YES'{\SetDocVar Header:Show={NO}}{}}%
+	{\IfVar DOC::Header:Refresh='YES'{\SetDocVar Header:Show={YES}}{}\hfill}%
+}%
+
+%% header box put into header each time Header:Show DocVar is set to YES
+\SetDocVar Header:Box={%
+	\vbox to\GetDocVar{Header:Depth}{%
+		\vss % make the header content exceed above vbox
+ 		\line{\GetDocVar{Header:Content:Left}\hss\GetDocVar{Header:Content:Center}\hss\GetDocVar{Header:Content:Right}}%
+ 		\line{\raise.6\baselineskip\hbox{\Gray{\vrule width\hsize depth\GetDocVar{Header:RuleThickness}}}}}}%
+
+%% header box related stuff
+\SetDocVar Header:Content:Left={content of variable Header:Content:Left}
+\SetDocVar Header:Content:Right={content of variable Header:Content:Right}
+\SetDocVar Header:Content:Center={}
+\SetDocVar Header:RuleThickness={1pt}
+\SetDocVar Header:Depth={0pt}
+
+%% implicit header related DocVars
+\SetDocVar Header:Show={YES}
+\SetDocVar Header:Abolish={NO}
+\SetDocVar Header:Refresh={YES}
+
+%% footer box put into footer each time Footer:Show DocVar is set to YES
+\SetDocParam[Footer]={%
+	\IfVar DOC::Footer:Show='YES'{%
+		\GetDocVar{Footer:Box}%
+		\IfVar DOC::Footer:Abolish='YES'{\SetDocVar Footer:Show={NO}}{}}%
+	{\IfVar DOC::Footer:Refresh='YES'{\SetDocVar Footer:Show={YES}}{\hfill}}%
+}
+
+\SetDocVar Footer:Box={%
+	\line{\GetDocVar{Footer:Content:Left}\hss\GetDocVar{Footer:Content:Center}\hss\GetDocVar{Footer:Content:Right}}}
+
+%% footer related DOC params and vars
+\SetDocVar Footer:Content:Left={}
+\SetDocVar Footer:Content:Right={}
+\SetDocVar Footer:Content:Center={\SetFont{NormalFont}\folio}
+
+%% implicit footer related DocVars
+\SetDocVar Footer:Show={YES}
+\SetDocVar Footer:Abolish={NO}
+\SetDocVar Footer:Refresh={NO}
+
+{% PRE handling routines of DOC params - temporary
+\def\handleDocFont#1{\SetFont{#1}}%
+
+%% works only if the default Footer (DocParam) is preserved
+% YES means simple page numbering with page number centered on each page
+% any other value respects your choice and content of Footer:Content:.. variables
+\def\handleDocPageNumbering#1{\IfLit'#1'='YES'{%
+	\SetDocVar Footer:Show={YES}%
+	\SetDocVar Footer:Content:Center={\SetFont{NormalFont}\folio}%
+	\SetDocVar Footer:Content:Left={}%
+	\SetDocVar Footer:Content:Right={}}%
+	{}}%
+
+% entire document cannot have any left, right _indent_; style can
+\def\handleDocAlignment#1{\SetLeftRightSkip{#1}{0pt}{0pt}}
+\def\handleDocLineSpacingFactor#1{\baselineskip=1.2em\baselineskip=#1\baselineskip}
+\def\handleDocPageOrientation#1{\IfLit '#1'='landscape'{\special{landscape}}{}}%
+\def\handlePreColumns#1{%
+	\DPRINT{looking for var DOC::ColumnsTotal: \GetVar{DOC::ColumnsTotal}!=!#1}
+	\ifnum #1>1% then - there are many columns
+		\DPRINT{detected many columns adjusting sizes}%
+		\eSetVar{OrigTextWidth}{\the\hsize}
+		\tempdimen=\GetDocParam[ColumnSpacing]
+		%\advance\tempdimen by \GetVar{IntercolumnLineWidth}% vrule is .4 pt wide - it is a part of space between columns
+		\tempdimen=\GetDocParam[ColumnsTotal]\tempdimen
+		\advance\tempdimen by-\GetDocParam[ColumnSpacing]%
+		%\advance\tempdimen by-\GetVar{IntercolumnLineWidth}% place taken by spaces between columns
+		\advance\hsize by-\tempdimen	% subtract it
+		\divide \hsize by\GetDocParam[ColumnsTotal]%
+		%\DPRINT{hsize is \the\hsize}%
+		% calculate real column spacing (one left, one right + width of the rule)
+		\tempdimen=\GetDocParam[ColumnSpacing]
+		\advance\tempdimen by-\GetDocParam[InterColumnLineWidth]
+		\divide\tempdimen by2
+		\eSetVar{DOC::RealColumnSpacing}{\the\tempdimen}%
+		\DeclareCounter{ColumnCounter}%
+		\output={\MultiColumnOutput}%
+	\fi
+}
+\def\handlePostColumns#1{\ifnum #1>1\ejectpage\fi}%
+\def\handleAllowWidows#1{\IfLit '#1'='NO'{\widowpenalty=10000}{\widowpenalty=150}}
+\def\handleAllowOrphans#1{\IfLit '#1'='NO'{\clubpenalty=10000}{\clubpenalty=150}}
+\def\handleAllowUnderfullVBoxes#1{\IfLit '#1'='YES'{\vbadness=10000}{\vbadness=1000}}
+
+\def\SetPreHandler#1{{%
+	\ex\let\ex\tmpB\csname handleDoc#1\endcsname
+	\SetDocParamPreHandler[#1]\tmpB}}%
+
+\SetPreHandler{Font}
+\SetPreHandler{Alignment}
+\SetPreHandler{LineSpacingFactor}
+\SetPreHandler{PageOrientation}
+\SetDocParamPreHandler[ColumnsTotal]\handlePreColumns
+\SetDocParamPostHandler[ColumnsTotal]\handlePostColumns
+\SetDocParamImmHandler[PageNumbering]\handleDocPageNumbering
+\SetDocParamImmHandler[DocumentClass]\LoadPackage
+\SetDocParamImmHandler[AllowWidows]\handleAllowWidows
+\SetDocParamImmHandler[AllowOrphans]\handleAllowOrphans
+\SetDocParamImmHandler[AllowUnderfullVBoxes]\handleAllowUnderfullVBoxes
+
+
+}% forgetting temporary handle.. macros
+
+
+%\SetPreHandler{ColumnSpacing}\handleDocColumnSpacing
+%\SetPreHandler{InterColumnLineWidth}\handleDocInterColumnLineWidth
+
+%}%
+
+% initialization to default values
+\LoadFile{docenvi_settings.tex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% multicolumn related stuff{begin}
+\newdimen\tempdimen
+\newbox\FinalPage
+
+\let\NewColumn\NewPage
+\def\MultiColumnOutput{%
+	\ifnum\outputpenalty=-\pagepenalty\PrintFinalPage\else
+	\IncrementCounter{ColumnCounter}%
+	%\DPRINT{ColumnCounter is \GetCounter}
+	\IfVar DOC::ColumnsTotal='\GetCounter{ColumnCounter}'%
+		{\PrintFinalPage}{\AppendNewColumn}\fi}%
+
+\def\AppendNewColumn{\global\setbox\FinalPage=\columns}%
+\def\PrintFinalPage{\setbox255=\vbox{\columns}\hsize=\GetVar{OrigTextWidth}%
+	\plainoutput\ResetCounter{ColumnCounter}}%
+\def\columns{\hbox{\ifvoid\FinalPage\else\unhbox\FinalPage\kern\GetVar{DOC::RealColumnSpacing}\vrule width\GetDocParam[InterColumnLineWidth]\kern\GetVar{DOC::RealColumnSpacing}\fi\box255}}
+
+\mathchardef\pagepenalty=10201
+\def\ejectpage{\par\penalty-\pagepenalty}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% multicolumn related stuff{end}

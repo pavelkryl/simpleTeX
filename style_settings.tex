@@ -1,0 +1,37 @@
+\LoadPackage{styles}
+
+\CreateNewStyle{Heading1}{Heading1Font}
+\SetStyleParam{Heading1}[BreakAllowed]={NO}
+\SetStyleParam{Heading1}[LineSpacingFactor]={2}
+\SetStyleParam{Heading1}[PreActions]={\removelastskip}	% common for titles
+% in case of radkovy rejstrik
+\SetStyleParam{Heading1}[TopSkipLines]={3}
+\SetStyleParam{Heading1}[BottomSkipLines]={2}
+\SetStyleParam{Heading1}[SuppresNextParIndent]={YES}
+\SetStyleParam{Heading1}[SoftTopSpace]={YES}
+
+\DeriveNewStyle{Heading1}->{Heading2}
+\SetStyleParam{Heading2}[Font]={Heading2Font}
+\SetStyleParam{Heading2}[TopSkipLines]={2}
+\SetStyleParam{Heading2}[BottomSkipLines]={1}
+
+\DeriveNewStyle{Heading2}->{Heading3}
+\SetStyleParam{Heading3}[Font]={Heading3Font}
+\SetStyleParam{Heading3}[ExtraBottomSpace]={1em}
+\SetStyleParam{Heading3}[ExtraTopSpace]={1.5em}
+% in case of radkovy rejstrik
+\SetStyleParam{Heading3}[TopSkipLines]={2}
+\SetStyleParam{Heading3}[BottomSkipLines]={1}
+
+\DeriveNewStyle{Heading3}->{Heading4}
+\SetStyleParam{Heading4}[Font]={Heading4Font}
+\SetStyleParam Heading4[Prefix]={\Square[7pt][1pt]\hskip .6em}
+\SetStyleParam{Heading4}[ExtraBottomSpace]={.5em}
+\SetStyleParam{Heading4}[ExtraTopSpace]={1em}
+% in case of radkovy rejstrik
+\SetStyleParam{Heading4}[TopSkipLines]={1.5}
+\SetStyleParam{Heading4}[BottomSkipLines]={.5}
+
+\DeriveNewStyle{Heading4}->{SubTitle}
+\SetStyleParam{SubTitle}[Alignment]={center}
+

@@ -1,0 +1,20 @@
+\LoadPackage{counters}
+\LoadFile{style_settings.tex}
+
+\DeclareCounter{FootnoteCounter}
+
+%% redefining vfootnote plait tex macro
+{\catcode`\@=11%
+\gdef\vfootnote#1{\insert\footins\bgroup
+	\interlinepenalty=\interfootnotelinepenalty
+	\splittopskip=\ht\strutbox
+	\splitmaxdepth=\dp\strutbox
+	\floatingpenalty=20000 %
+	\leftskip=0pt \rightskip=0pt %
+	\spaceskip=0pt \xspaceskip=0pt \parindent=0pt %
+	\textindent{#1}\footstrut\futurelet\next\fo@t}
+}
+
+\def\Footnote#1{\IncrementCounter{FootnoteCounter}%
+\footnote{$^{\GetCounter{FootnoteCounter}}$}{\SetFont{SmallFont}\baselineskip=1.2em\lineskiplimit=-1pt#1\par}}
+%\footnote{$^{\GetCounter{FootnoteCounter}}$}{\SetFont{SmallFont}\baselineskip=8pt#1}}

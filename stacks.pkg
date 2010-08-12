@@ -1,0 +1,139 @@
+% (C) Pavel Kryl, 2002
+% stack package, the stack may contain _only_ plain text
+% stacks may contain also CSs
+
+\def\DeclareStack#1{%
+	\DPRINT{Declaring stack #1}%
+	\ex\gdef\csname STACK::#1\endcsname{}%
+	\DeclareCounter{STACK::#1}}%
+
+%% makes sure stack #1 exists
+\def\AssertStack#1{\ex\ifx\csname STACK::#1\endcsname\relax
+	\FatalErrMsg{Stack #1 undeclared}\fi}%
+
+%% returns CS representing the stack
+\def\GetStackCS#1{\csname STACK::#1\endcsname}%
+
+%% clears stack, params:
+% 1 - stack name
+\def\ClearStack#1{\DeclareStack{#1}}
+
+%% pushes one element onto the stack, ready for CSs, params:
+% 1 - stack ID
+% 2 - element to push
+\def\Push#1#2{{%
+	\AssertStack{#1}%
+	%\message{pushing \string#2}%
+	\toks0={#2}%
+	\ex\ex\ex\toks1\ex\ex\ex=\ex\ex\ex{\csname STACK::#1\endcsname}%
+	%\message{new stack content: \the\toks0, \the\toks1}%
+	\ex\xdef\csname STACK::#1\endcsname{\the\toks0, \the\toks1}%
+	\IncrementCounter{STACK::#1}}}%
+
+%% pushes one element onto the stack, but on the bottom
+\def\PushBack#1#2{{%
+	\AssertStack{#1}%
+	%\message{pushing back \string#2}%
+	\toks0={#2}%
+	\ex\ex\ex\toks1\ex\ex\ex=\ex\ex\ex{\csname STACK::#1\endcsname}%
+	%\message{new stack content: \the\toks1 \the\toks0, }%
+	\ex\xdef\csname STACK::#1\endcsname{\the\toks1 \the\toks0, }%
+	\IncrementCounter{STACK::#1}}}%
+
+%% it is mistake to pop empty stack!, ready for stack containing CSs, params:
+% 1 - stack ID
+% 2 - into which CS pop the element (\def is used not \let!!)
+\def\Pop#1#2{%
+	\IfCounter STACK::#1='0'{\FatalErrMsg{cannot do POP on an empty stack!!}}%
+	{\DecrementCounter{STACK::#1}\ex\ex\ex\separe\csname STACK::#1\endcsname\end #2{#1}}}%
+
+%% clones stack, ready for stack containing CSs, params:
+% 1 - source stack name
+% 2 - destination stack name
+\def\CloneStack #1->#2{{%
+	\AssertStack{#1}%
+	\def\tmpD{\ex\gdef\csname STACK::#2\endcsname}%
+	\ex\ex\ex\tmpD\ex\ex\ex{\csname STACK::#1\endcsname}%
+	\DeclareCounter{STACK::#2}%
+	\eSetCounter{STACK::#2}{\GetCounter{STACK::#1}}}
+	\DPRINT{stack #1 cloned into stack #2}}%
+
+%% dumps content of stack #1 it is not safe to dump a stack with CSs (the
+% content will expand)
+\def\DumpStack#1{\AssertStack{#1}%
+	stack #1:number of elements=\GetCounter{STACK::#1}, content=\GetStackCS{#1}}%\NewLine}%
+
+%% controls if stack #1 is empty, ready for stack containing CSs
+\def\IfStackEmpty#1#2#3{\AssertStack{#1}%
+	\IfCounter STACK::#1='0'{#2}{#3}}%
+
+%% helper macro popping an element
+\def\separe#1, #2\end #3#4{%
+\def#3{#1}\ex\def\csname STACK::#4\endcsname{#2}}%
+
+%% popping element from hlpStack identifed by #1, performing action #2 with the
+%% popped element (CS ready), params:
+% 1 - name of the hlpStack
+% 2 - action to do (macro accepting one parameter)
+\def\PopHlpStackAndDo#1#2{%
+	\IfStackEmpty{HlpStack#1}{\let\next=\relax}{\def\next{\Pop{HlpStack#1}\top
+	%top is \top end of top
+	#2\top\PopHlpStackAndDo{#1}#2}}%
+	\next
+}%
+
+
+%% (CS ready), params:
+% 1 - stack name
+% 2 - action to do (macro accepting one parameter)
+\def\ForEachStackElem#1#2{%
+	\CloneStack #1->{HlpStack#1}%
+	\PopHlpStackAndDo{#1}#2%
+}%
+
+%% tries to find element in stack, the elements are expanded, be careful if the
+% stack contains CSs, params:
+% 1 - stack name (each item expanded)
+% 2 - element (expanded)
+% 3 - then text
+% 4 - else text
+\def\IfElemInStack#1'#2'#3#4{{%
+	\def\Found{FALSE}%
+	\def\TestElem##1{\IfLit'##1'='#2'{\def\Found{TRUE}}{}}%
+	\ForEachStackElem{#1}\TestElem
+	\IfLit '\Found'='TRUE'{#3}{#4}%
+}}%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%				property lists, based on stacks
+% property lists contain unique values
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% property list manipulation: contains unique values
+\def\DeclarePList#1{%
+	\DPRINT{declaring PList #1}%
+	\DeclareStack{PLIST::#1}}%
+\def\AppendToPList#1#2{%
+	%Trying to append #2 to PList #1\NewLine
+	\IfElemInStack PLIST::#1'#2'{}{\PushBack{PLIST::#1}{#2}}}%
+%% dumps property list along with values
+\def\DumpPList#1{Dumping PList #1: \DumpStack{PLIST::#1}}%
+
+%% 
+\def\AssertPList#1{\AssertStack{PLIST::#1}}%
+
+%% copies property list, the copying procedure may be managed
+%% which means that every copied element is processed by user defined routine
+%% params:
+% 1 - source PList
+% 2 - user defined routine (macro) may be empty
+% 3 - destination PList
+\def\ClonePList#1-#2->#3{%
+	\CloneStack {PLIST::#1}->{PLIST::#3}%
+	\ex\IfLit\ex'\string#2a'='a'{}{\ForEachPListElem{#1}#2}%
+}%
+
+%% performs operation on each PList element, params:
+% 1 - PList name
+% 2 - action (macro accepting one parameter)
+\def\ForEachPListElem #1#2{%
+	\ForEachStackElem{PLIST::#1}#2}%

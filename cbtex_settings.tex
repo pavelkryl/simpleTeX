@@ -1,0 +1,74 @@
+\LoadPackage{cbtex}
+%% Customization of cbTeX powered document
+
+%% i18n of envi names:
+\SetCZEnviName{Cite}{Citace}
+\SetCZEnviName{List}{Seznam}
+\SetCZEnviName{DescriptionList}{SeznamPojmu}
+\SetCZEnviName{List123}{Seznam123}
+\SetCZEnviName{ListIII}{SeznamIII}
+\SetCZEnviName{Listiii}{Seznamiii}
+\SetCZEnviName{Listabc}{Seznamabc}
+\SetCZEnviName{ListABC}{SeznamABC}
+\SetCZEnviName{Table}{Tabulka}
+\SetCZEnviName{LTable}{LTabulka}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% doc params
+\SetDocParam[AllowWidows]={NO}
+\SetDocParam[AllowOrphans]={NO}
+\SetDocParam[AllowUnderfullVBoxes]={YES}
+\SetDocParam[TextWidth]={16truecm}
+\SetDocParam[TextHeight]={24truecm}
+\SetDocParam[PageNumbering]={YES}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% declaring new fonts (adjusting sizes)
+\SetFontFamily{Palatino}
+\MkFontTenAlias {CastFont}{Bold}{at 24pt}
+\MkFontTenAlias {Heading1Font}{Bold}{at 24pt}
+\MkFontTenAlias {Heading2Font}{Bold}{at 18pt}
+\MkFontTenAlias {Heading3Font}{Bold}{at 14pt}
+\MkFontTenAlias {Heading4Font}{BoldItalic}{at 14pt}
+\MkFontTenAlias {NormalFont}{Regular}{at 12pt}
+
+%% style params
+\SetStyleParam Cast[Alignment]={center}
+\SetStyleParam Cast[PreActions]={\NewPage\vglue.2\vsize\SetDocVar Header:Show={NO}\SetVar{AktKap}{}\SetVar{AktNadp}{}}
+\SetStyleParam Cast[Prefix]={»·st \ToRomanUpper{\GetCounter{CastCounter}}\break\\}
+\SetStyleParam Cast[Postfix]={\break}
+\SetStyleParam Cast[PostActions]={\NewPage}
+% in case of radkovy rejstrik
+\SetStyleParam{Cast}[TopSkipLines]={1}
+\SetStyleParam{Cast}[BottomSkipLines]={1}
+%% kapitola
+\SetStyleParam Heading1[PreActions]={\NewPage\SetDocParam [Header:Show]={NO}\SetDocParam[Header:Refresh]={YES}}
+\SetStyleParam Heading1[Prefix]={\GetCounter{KapitolaCounter}. KAPITOLA}
+\SetStyleParam Heading1[Alignment]={center}
+\SetStyleParam Heading1[ExtraBottomSpace]={3\baselineskip}
+\SetStyleParam Heading1[LineSpacingFactor]={2}
+\SetStyleTOCParam Heading1[Filler]={\EmptyFiller}
+%% nadpis
+\SetStyleParam Heading2[Prefix]={\GetCounter{KapitolaCounter}.\GetCounter{NadpisCounter}.\hskip.8cm}
+\SetStyleParam Heading2[ExtraBottomSpace]={1em}
+\SetStyleParam Heading2[ExtraTopSpace]={2em}
+\SetStyleTOCParam Heading2[Filler]={\EmptyFiller}
+\SetStyleTOCParam Heading2[PrefixWidth]={0cm}
+%% podnadpis
+\SetStyleParam Heading3[Prefix]={\GetCounter{KapitolaCounter}.\GetCounter{NadpisCounter}.\GetCounter{PodNadpisCounter}.\hskip.8cm}
+\SetStyleParam Heading3[ExtraBottomSpace]={1em}
+\SetStyleParam Heading3[ExtraTopSpace]={1.5em}
+%% podpodnadpis
+\SetStyleParam Heading4[Prefix]={\Square[5pt][2pt]\hskip.6em}
+\SetStyleParam Heading4[ExtraBottomSpace]={.5em}
+\SetStyleParam Heading4[ExtraTopSpace]={1em}
+%% headers
+\SetDocVar Header:Content:Left={\ifodd\pageno\else\SetFont{NormalFont}\Bold{\GetVar{AktKap}}\fi}
+\SetDocVar Header:Content:Right={\ifodd\pageno\SetFont{NormalFont}\BoldItalic{\GetVar{AktNadp}}\fi}
+
+\SetEnviParam NumberedFigure[LabelName]={Obr·zek}
+\SetEnviParam NumberedFigure[NumberSequence]={\GetCounter{KapitolaCounter}.\FigCounterValue}
+
+\raggedbottom
+\EnableCastTOC
+\EnablePodNadpisTOC
+\EnableNadpisTOC
+\EnableKapitolaTOC

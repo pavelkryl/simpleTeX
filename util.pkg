@@ -1,0 +1,24 @@
+%% converts content of #1 to upper case, first #1 is
+% completely expanded, params:
+% 1 - text to be expanded and then converted to upper case
+\def\ToUpper#1{{%
+	\edef\hlp{#1}%
+	\ex\uppercase\ex{\hlp}%
+}}
+
+%% converts given argument to a roman number
+\def\ToRoman#1{\romannumeral#1}%
+
+
+%% converts given argument to a letter
+\def\ToChar#1{\char#1}
+
+%% converts given number in decimal notation into big roman number (III)
+\def\ToRomanUpper#1{\ToUpper{\ToRoman{#1}}}
+
+\def\ExFChar#1#2 {#1}
+\def\ExNFChar#1#2 {#2}
+\def\First#1{\ExFChar#1 }
+\def\ButFirst#1{\ExNFChar#1 }
+
+\def\SuppresNextParIndent{\everypar={\setbox0=\lastbox\everypar={}}}

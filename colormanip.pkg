@@ -1,0 +1,160 @@
+%%%%%%%%%%%%%%%%%%% podpora barev %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ifx\pdfoutput\undefined
+	\input colordvi%
+\else
+	\input pdfcolor%
+	\SetVar{CurrPDFColor}{\cmykBlack}% default is black
+	\def\Color#1#2{{%
+		\lSetVar{CurrPDFColor}{#1}% changing color locally
+		\pdfsetcolor{#1}#2%
+		}%
+	\pdfsetcolor{\GetVar{CurrPDFColor}}% restoring original color
+	}%
+	%% redefinition of PDF color (restores previous color)
+	\def\redefColorNameForPDF#1{%
+		\ex\def\csname #1\endcsname##1{{%
+			\lSetVar{CurrPDFColor}{#1}% changing color locally
+			\pdfsetcolor{\csname cmyk#1\endcsname}##1%
+		}%
+		\pdfsetcolor{\GetVar{CurrPDFColor}}% restoring original color
+		}%
+	}%
+	\redefColorNameForPDF{GreenYellow}
+	\redefColorNameForPDF{Yellow}
+	\redefColorNameForPDF{Goldenrod}
+	\redefColorNameForPDF{Dandelion}
+	\redefColorNameForPDF{Apricot}
+	\redefColorNameForPDF{Peach}
+	\redefColorNameForPDF{Melon}
+	\redefColorNameForPDF{YellowOrange}
+	\redefColorNameForPDF{Orange}
+	\redefColorNameForPDF{BurntOrange}
+	\redefColorNameForPDF{Bittersweet}
+	\redefColorNameForPDF{RedOrange}
+	\redefColorNameForPDF{Mahogany}
+	\redefColorNameForPDF{Maroon}
+	\redefColorNameForPDF{BrickRed}
+	\redefColorNameForPDF{Red}
+	\redefColorNameForPDF{OrangeRed}
+	\redefColorNameForPDF{RubineRed}
+	\redefColorNameForPDF{WildStrawberry}
+	\redefColorNameForPDF{Salmon}
+	\redefColorNameForPDF{CarnationPink}
+	\redefColorNameForPDF{Magenta}
+	\redefColorNameForPDF{VioletRed}
+	\redefColorNameForPDF{Rhodamine}
+	\redefColorNameForPDF{Mulberry}
+	\redefColorNameForPDF{RedViolet}
+	\redefColorNameForPDF{Fuchsia}
+	\redefColorNameForPDF{Lavender}
+	\redefColorNameForPDF{Thistle}
+	\redefColorNameForPDF{Orchid}
+	\redefColorNameForPDF{DarkOrchid}
+	\redefColorNameForPDF{Purple}
+	\redefColorNameForPDF{Plum}
+	\redefColorNameForPDF{Violet}
+	\redefColorNameForPDF{RoyalPurple}
+	\redefColorNameForPDF{BlueViolet}
+	\redefColorNameForPDF{Periwinkle}
+	\redefColorNameForPDF{CadetBlue}
+	\redefColorNameForPDF{CornflowerBlue}
+	\redefColorNameForPDF{MidnightBlue}
+	\redefColorNameForPDF{NavyBlue}
+	\redefColorNameForPDF{RoyalBlue}
+	\redefColorNameForPDF{Blue}
+	\redefColorNameForPDF{Cerulean}
+	\redefColorNameForPDF{Cyan}
+	\redefColorNameForPDF{ProcessBlue}
+	\redefColorNameForPDF{SkyBlue}
+	\redefColorNameForPDF{Turquoise}
+	\redefColorNameForPDF{TealBlue}
+	\redefColorNameForPDF{Aquamarine}
+	\redefColorNameForPDF{BlueGreen}
+	\redefColorNameForPDF{Emerald}
+	\redefColorNameForPDF{JungleGreen}
+	\redefColorNameForPDF{SeaGreen}
+	\redefColorNameForPDF{Green}
+	\redefColorNameForPDF{ForestGreen}
+	\redefColorNameForPDF{PineGreen}
+	\redefColorNameForPDF{LimeGreen}
+	\redefColorNameForPDF{YellowGreen}
+	\redefColorNameForPDF{SpringGreen}
+	\redefColorNameForPDF{OliveGreen}
+	\redefColorNameForPDF{RawSienna}
+	\redefColorNameForPDF{Sepia}
+	\redefColorNameForPDF{Brown}
+	\redefColorNameForPDF{Tan}
+	\redefColorNameForPDF{Gray}
+	\redefColorNameForPDF{Black}
+	\redefColorNameForPDF{White}
+\fi
+
+% zde je seznam pou¾itelných barev:
+% GreenYellow
+% Yellow
+% Goldenrod
+% Dandelion
+% Apricot
+% Peach
+% Melon
+% YellowOrange
+% Orange
+% BurntOrange
+% Bittersweet
+% RedOrange
+% Mahogany
+% Maroon
+% BrickRed
+% Red
+% OrangeRed
+% RubineRed
+% WildStrawberry
+% Salmon
+% CarnationPink
+% Magenta
+% VioletRed
+% Rhodamine
+% Mulberry
+% RedViolet
+% Fuchsia
+% Lavender
+% Thistle
+% Orchid
+% DarkOrchid
+% Purple
+% Plum
+% Violet
+% RoyalPurple
+% BlueViolet
+% Periwinkle
+% CadetBlue
+% CornflowerBlue
+% MidnightBlue
+% NavyBlue
+% RoyalBlue
+% Blue
+% Cerulean
+% Cyan
+% ProcessBlue
+% SkyBlue
+% Turquoise
+% TealBlue
+% Aquamarine
+% BlueGreen
+% Emerald
+% JungleGreen
+% SeaGreen
+% Green
+% ForestGreen
+% PineGreen
+% LimeGreen
+% YellowGreen
+% SpringGreen
+% OliveGreen
+% RawSienna
+% Sepia
+% Brown
+% Tan
+% Gray
+% Black
+% White

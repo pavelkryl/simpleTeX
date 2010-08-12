@@ -1,0 +1,125 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%% figure management %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input epsf
+\LoadPackage{util}
+\LoadPackage{styles}
+\LoadPackage{labels}
+\LoadPackage{refs}
+\LoadFile{envi_settings.tex}
+
+%% new figure environment
+\DeriveNewEnvironment VarFloating->{Figure}
+
+%% global settings
+\SetEnviParam Figure[Dir]={.}
+\SetEnviParam Figure[Floating]={YES}
+\SetEnviParam Figure[ExtraTopSpace]={\baselineskip}
+\SetEnviParam Figure[FloatingType]={in place} % other: top, page
+
+\DeriveNewEnvironment Figure->{NumberedFigure}
+\PostfixEnviParam NumberedFigure[PreActions]<{\hIncrementCounter{\GetCurrEnviParam[Counter]}}
+
+\DeclareCounter{FigureCounter}
+
+\SetEnviParam NumberedFigure[Counter]={FigureCounter}
+\SetEnviParam NumberedFigure[LabelName]={Figure}
+\SetEnviParam NumberedFigure[NumberSequence]={\FigCounterValue}
+\SetEnviParam NumberedFigure[FigureLabelSpace]={5pt}
+
+%%%%%%%%%%%%%%%%%%%%%% macros to be used in Figure environment %%%%%%%%%%%%%%%%%
+\def\FigCounterValue{\GetCounter{\GetCurrEnviParam[Counter]}}
+
+%% prints figure label, this macro can be used only in NumberedFigure envi, params:
+% 1 - text after the LabelName and NumberSequence
+\def\FigLabel#1{\Label{\Bold{\GetCurrEnviParam[LabelName]
+\GetCurrEnviParam[NumberSequence]:} #1}}
+
+%% make references (page, number) related to a figure, params:
+% 1 - figure ID
+% 2 - figure number sequence to be used in references
+\def\MakeFigRefs#1#2{\SetDocEntityRefs{Figure::#1}{#2}}
+
+%% reference to a figure, params:
+% 1 - figure ID
+% 2 - page|number
+\def\GetFig#1#2{\GetDocEntityRef{Figure::#1}{#2}}
+
+%% returns page where the given image is depicted, params:
+% 1 - figure ID
+\def\GetFigPage#1{\GetDocEntityRef{Figure::#1}{page}}
+%% returns number of the image, params:
+% 1 - figure ID
+\def\GetFigNumber#1{\GetDocEntityRef{Figure::#1}{number}}
+
+%%%%%%%%%%%%%%%% macros to be used even outside Figure envi %%%%%%%%%%%%%%%
+
+%% inserts figure immediately in this place as vbox, params:
+% 1 - full name of the file (suffix .eps included)
+% 2 - size (in absolute units) or magnification,
+%	magnification is prefixed by * followed by real number:
+%		* 1.0 - no magnification
+%		* .5  - half sized
+%		* 2   - double side
+\def\RawInsertFigure#1#2{%
+	\if*\First{#2}\def\epsfsize##1##2{\ButFirst{#2}##1}%
+	\else \epsfxsize=#2\fi
+	\epsfbox{#1}}
+
+%% vklada obrazek do radky jako kazde jine pismeno
+% parametry:
+% 1 - nazev souboru obrazku
+% 2 - horizontalni rozmer obrazku
+% 3 - snizeni obrazku
+\def\InlineFigure#1#2#3{\lower#3\hbox{\RawInsertFigure{#1}{#2}}}
+
+%% Inserts figure similarly as RawInsertFigure does, but in a separate
+% paragraph, centered horizontally, params:
+% 1 - full name of the figure file
+% 2 - size (in absolute units) or magnification,
+%	magnification is prefixed by * followed by real number:
+%		* 1.0 - no magnification
+%		* .5  - half sized
+%		* 2   - double side
+\def\CenterFigure#1#2{\centerline{\RawInsertFigure{#1}{#2}}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%						Shortcuts for Figure environment
+
+%% inserts figure into text as a regular letter, params:
+% 1 - name fo the file (including suffix, prefix taken from envi param)
+% 2 - horizontal size of the image
+% 3 - lower amount
+\def\ImmFigure#1#2#3{\InlineFigure{\GetEnviParam{Figure}[Dir]/#1}{#2}{#3}}
+
+%% inserts figure with the set figure envi params, params:
+% 1 - name of figure file (suffix included, prefix taken from
+%	figure Dir envi param)
+% 2 - horizontal size of an image - size or magnification:
+%	magnification is prefixed by * followed by real number:
+%		*1.0 - no magnification
+%		*.5  - half sized
+%		*2   - double side
+% 3 - unique id of the figure
+\def\LbllessFigure#1#2#3{%
+	\Begin{Figure}%
+	\noindent{\CenterFigure{\GetCurrEnviParam[Dir]/#1}{#2}}%
+	\MakeFigRefs{#3}{}%
+	\End{Figure}}
+
+%% inserts figure with the set figure envi params, params:
+% 1 - name of figure file (suffix included, prefix taken from
+%	figure Dir envi param)
+% 2 - horizontal size of an image - size or magnification:
+%	magnification is prefixed by * followed by real number:
+%		*1.0 - no magnification
+%		*.5  - half sized
+%		*2   - double side
+% 3 - unique id of the figure
+% 4 - description label of the figure
+\def\LblFigure#1#2#3#4{%
+	\Begin{NumberedFigure}%
+	\noindent{\CenterFigure{\GetCurrEnviParam[Dir]/#1}{#2}}%
+	\vskip{\GetCurrEnviParam[FigureLabelSpace]}%
+	\FigLabel{#4}%
+	\MakeFigRefs{#3}{\GetCurrEnviParam[NumberSequence]}%
+	\End{NumberedFigure}}

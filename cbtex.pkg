@@ -1,0 +1,227 @@
+\LoadPackage{util}
+\LoadPackage{literature}
+\LoadPackage{contents}
+\LoadPackage{macromanip}
+\LoadPackage{figures}
+\LoadPackage{refs}
+\LoadPackage{footnotes}
+\LoadPackage{toc}
+%% customization for CBTeX -- giving macros new names
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% counters
+\DeclareCounter{CastCounter}
+\DeclareCounter{KapitolaCounter}
+\DeclareCounter{NadpisCounter}
+\DeclareCounter{PodNadpisCounter}
+\DeclareCounter{PodPodNadpisCounter}
+
+{% counter handlers - local
+\def\KapH{\hResetCounter{NadpisCounter}\hResetCounter{FootnoteCounter}\hResetCounter{FigureCounter}}%
+\def\NadH{\hResetCounter{PodNadpisCounter}}%
+\def\PodNadH{\hResetCounter{PodPodNadpisCounter}}%
+
+\AddCounterHandler{KapitolaCounter}\KapH
+\AddCounterHandler{NadpisCounter}\NadH
+\AddCounterHandler{PodNadpisCounter}\PodNadH
+}%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% environments
+\def\Hlavicka{\SetDocParam[Footer:Show]={NO}}
+\def\Telo{\SetDocParam[Footer:Show]={YES}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TOC
+\def\AktivujObsah{%
+	\eSetVar{hr:old}{\GetDocVar{Header:Refresh}}%
+	\eSetVar{hs:old}{\GetDocVar{Header:Show}}%
+	\SetDocVar Header:Show={NO}%
+	\SetDocVar Header:Refresh={NO}%
+	\Style{BigLabel}{Obsah}%
+	%{\SetFont{Heading1Font}Obsah\hfill\break}%
+	\InsertTOC{\jobname}\NewPage\DeclareTOC{\jobname}%
+	\eSetDocVar Header:Show={\GetVar{hs:old}}%
+	\eSetDocVar Header:Refresh={\GetVar{hr:old}}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% styles
+\CreateNewStyle{Cast}{CastFont}
+\DeriveNewStyle Heading1->{BigLabel}
+
+%%%%%%%%%%%%%%%%% style params
+\SetStyleParam Cast[Counter]={CastCounter}
+% part handlers
+\def\MkCastRefs#1{{\let~=\space\SetDocEntityRefs{Cast::\GetVar{CurrRefID}}{\GetCounter{CastCounter}.}}}
+\def\SetAktCastVar#1{\SetVar{AktCast}{#1}}
+%\def\MkCastTOCLine#1{{%
+	% preparing args for AddTOCLine
+%	\def\argstr{\MkInvisibleStrut{30pt}{10pt}\SetFont{Heading3Font}Èást }%
+%	\ePostfixMacroBody\argstr{\GetCounter{CastCounter}.: }%
+%	\PostfixMacroBody\argstr{#1}%
+%	\ParentMacroBody\argstr	% arg1 for GeneralTOCLine ready
+%	\PrefixMacroBody\argstr\GeneralTOCLine
+%	\PostfixMacroBody\argstr\EmptyFiller % arg2 ready, arg3 completed automatically
+%	\ex\AddTOCLine\ex\jobname\ex{\argstr}}}
+
+%\def\EnableCastTOC{\AddStylePostHandler {Cast}\MkCastTOCLine}
+\def\EnableCastTOC{\TOCifyStyle{Cast}\jobname
+	{\MkInvisibleStrut{30pt}{10pt}\SetFont{Heading3Font}\noindent}%
+	{Èást \GetCounter{CastCounter}.}%
+	{}{\hskip.5em}{.5cm}}%
+
+\AddStylePostHandler {Cast}\MkCastRefs
+\AddStylePreHandler {Cast}\SetAktCastVar
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Kapitola
+
+\SetStyleParam Heading1[Counter]={KapitolaCounter}
+% chapter handlers
+\def\MkChapRefs#1{{\let~=\space\SetDocEntityRefs{Kapitola::\GetVar{CurrRefID}}{\GetCounter{KapitolaCounter}.}}}
+\def\SetAktKapVar#1{\SetVar{AktKap}{#1}}
+
+\AddStylePreHandler {Heading1}\SetAktKapVar
+\AddStylePreHandler {Heading1}\MkChapRefs
+%% params:
+% 1 - filler (DotFiller, LineFiller, EmptyFiller)
+\def\EnableKapitolaTOC{\TOCifyStyle{Heading1}\jobname
+	{\MkInvisibleStrut{20pt}{5pt}\SwitchToShape{Bold}\noindent}%
+	{\GetCounter{KapitolaCounter}.}%
+	{}{\hskip.5em}{.5cm}}%
+
+%% no counter is visible, but it is needed to performe reset correctly
+\SetStyleParam Heading2[Counter]={NadpisCounter}
+
+% heading2 handlers
+\def\MkHeadRefs#1{{\let~=\space\SetDocEntityRefs{Nadpis::\GetVar{CurrRefID}}{\GetCounter{KapitolaCounter}.\GetCounter{NadpisCounter}.}}}
+\def\SetAktNadpVar#1{\mark{#1}\SetVar{AktNadp}{\firstmark}}
+
+\AddStylePreHandler {Heading2}\SetAktNadpVar
+\AddStylePostHandler {Heading2}\MkHeadRefs
+
+%% params:
+% 1 - filler (DotFiller, LineFiller, EmptyFiller)
+\def\EnableNadpisTOC{\TOCifyStyle{Heading2}\jobname
+	{\MkInvisibleStrut{15pt}{10pt}\hskip.6cm}%
+	{\GetCounter{KapitolaCounter}.\GetCounter{NadpisCounter}.}%
+	{}{}{.5cm}}%
+
+%% no counter is visible, but it is needed to performe reset correctly
+\SetStyleParam Heading3[Counter]={PodNadpisCounter}
+\SetStyleParam Heading4[Counter]={PodPodNadpisCounter}
+
+% heading3 handlers
+\def\MkSubHeadRefs#1{{\let~=\space\SetDocEntityRefs{Nadpis::\GetVar{CurrRefID}}{\GetCounter{KapitolaCounter}.\GetCounter{NadpisCounter}.\GetCounter{PodNadpisCounter}.}}}
+
+\AddStylePostHandler {Heading3}\MkSubHeadRefs
+%% params:
+% 1 - filler (DotFiller, LineFiller, EmptyFiller)
+\def\EnablePodNadpisTOC{%
+	\errmessage{ha}%
+	\TOCifyStyle{Heading3}\jobname
+	{\MkInvisibleStrut{10pt}{5pt}\hskip1.5cm}%
+	{\GetCounter{KapitolaCounter}.\GetCounter{NadpisCounter}.\GetCounter{PodNadpisCounter}.\hss}%
+	{}{}{.5cm}}%
+
+% heading4 handlers
+\def\MkSubSubHeadRefs#1{{\let~=\space\SetDocEntityRefs{Nadpis::\GetVar{CurrRefID}}{bez èísla!}}}
+\AddStylePostHandler {Heading4}\MkSubSubHeadRefs
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% core CBTeX macros with the help of previously declared stuff
+
+
+%%%%%%% couples of heading styles, one for vararg given the other for non-vararg
+\def\VarArgCast[#1]#2{\SetVar{CurrRefID}{#1}\Style{Cast}{#2}}
+\def\HardArgCast#1{\SetVar{CurrRefID}{#1}\Style{Cast}{#1}}
+
+\def\VarArgKapitola[#1]#2{\SetVar{CurrRefID}{#1}\Style{Heading1}{#2}}
+\def\HardArgKapitola#1{\SetVar{CurrRefID}{#1}\Style{Heading1}{#1}}
+
+\def\VarArgNadpis[#1]#2{\SetVar{CurrRefID}{#1}\Style{Heading2}{#2}}
+\def\HardArgNadpis#1{\SetVar{CurrRefID}{#1}\Style{Heading2}{#1}}
+
+\def\VarArgPodNadpis[#1]#2{\SetVar{CurrRefID}{#1}\Style{Heading3}{#2}}
+\def\HardArgPodNadpis#1{\SetVar{CurrRefID}{#1}\Style{Heading3}{#1}}
+
+\def\VarArgPodPodNadpis[#1]#2{\SetVar{CurrRefID}{#1}\Style{Heading4}{#2}}
+\def\HardArgPodPodNadpis#1{\SetVar{CurrRefID}{#1}\Style{Heading4}{#1}}
+
+\def\VarArgPodPodPodNadpis[#1]#2{\SetVar{CurrRefID}{#1}\Style{Heading5}{#2}}
+\def\HardArgPodPodPodNadpis#1{\SetVar{CurrRefID}{#1}\Style{Heading5}{#1}}
+
+%% defun var arg headings, params:
+% 1 - var arg macro name (not the macro self)
+%	if vararg is present, macro \VarArg#1 is invoked
+%	if vararg is not present, macro \HardArg#1 is invoked
+\def\DefVarArgMacro#1{%
+	\ex\def\csname #1\endcsname{\IfNextChar[%
+		{\csname VarArg#1\endcsname}
+		{\csname HardArg#1\endcsname}}}
+
+\DefVarArgMacro{Cast}
+\DefVarArgMacro{Kapitola}
+\DefVarArgMacro{Nadpis}
+\DefVarArgMacro{PodNadpis}
+\DefVarArgMacro{PodPodNadpis}
+\DefVarArgMacro{PodPodPodNadpis}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CSs typesetting few words
+\def\Duraz#1{\Bold{#1}}
+\def\Nadsazka#1{\uv{#1}}
+\let\PodCarou=\Footnote
+\let\tecky=\dots
+\let\Tecky=\dots
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% other shortcust
+\def\Obrazek#1#2#3#4{\LblFigure{#2}{#3}{#1}{#4}}
+\def\OdkNaObrazek#1#2{\GetFig{#2}{\GetEnName{#1}}}
+\def\BlankPage{\NewPage
+	\SetDocVar{Footer:Show}={NO}%
+	\SetDocVar{Header:Show}={NO}%
+	\vglue0pt\NewPage}
+
+%% CZ i18n of environments %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% sets CZ environment name of english equivalent, params:
+% 1 - english envi name
+% 2 - czech envi name
+\def\SetCZEnviName#1#2{\SetVar{CZEnviName::#2}{#1}}
+%% returns english envi name of czech equivalent, params:
+% 1 - name of the environment in czech
+\def\GetENEnviName#1{\GetVar{CZEnviName::#1}}
+%% redefining Begin{} and End{}
+\def\Zacina#1{\Begin{\GetENEnviName{#1}}}
+\def\Konci#1{\End{\GetENEnviName{#1}}}
+\def\Polozka{\Item}
+
+%% i18n of envi names:
+\SetCZEnviName{Cite}{Citace}
+\SetCZEnviName{List}{Seznam}
+\SetCZEnviName{DescriptionList}{SeznamPojmu}
+\SetCZEnviName{List123}{Seznam123}
+\SetCZEnviName{ListIII}{SeznamIII}
+\SetCZEnviName{Listiii}{Seznamiii}
+\SetCZEnviName{Listabc}{Seznamabc}
+\SetCZEnviName{ListABC}{SeznamABC}
+\SetCZEnviName{Table}{Tabulka}
+\SetCZEnviName{LTable}{LTabulka}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% literature list related stuff
+\def\Publikace{\Publication}
+\def\OdkNaPub#1{\GetPubNum{#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% references
+% mapping strana -> page, èíslo -> number
+\SetVar{map::CZ->EN:strana}{page}
+\SetVar{map::CZ->EN:èíslo}{number}
+\def\GetEnName#1{\GetVar{map::CZ->EN:#1}}
+
+\def\OdkNaNadpis#1#2{{\let~=\space\GetDocEntityRef{Nadpis::#2}{\GetEnName{#1}}}}
+\def\OdkNaKapitolu#1#2{{\let~=\space\GetDocEntityRef{Kapitola::#2}{\GetEnName{#1}}}}
+\def\OdkNaCast#1#2{{\let~=\space%
+	\IfLit '#1'='èíslo'{\ToRomanUpper{\GetDocEntityRef{Cast::#2}{number}}}%
+	{\GetDocEntityRef{Cast::#2}{page}}}%
+}
+\def\Kotva#1{\Anchor{#1}{konst popisek}}
+\def\OdkNaKotvu#1{\GetAnchor{#1}{page}}
+
+\LoadFile{cbtex_settings.tex}

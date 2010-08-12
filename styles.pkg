@@ -1,0 +1,376 @@
+\LoadPackage{fonts}
+\LoadPackage{stacks}
+\LoadPackage{counters}
+
+% nastavuje leftskip a rightskip podle parametru aby zarovnání bylo po¾adované
+% navíc nastaví okraje na požadované hodnoty
+% 1. parametr je øídicí sekvence, která !definuje! jedno slovo z:
+% - center
+% - left
+% - right
+% - label (popisek, blok az na posledni radek, ktery je centrovany)
+% - block nebo cokoli jineho
+% 2. parametr je odsazení zleva
+% 3. parametr je odsazení zprava
+\def\SetLeftRightSkip#1#2#3{%
+	\IfLit '#1'='center'%
+		{% then
+		\leftskip=#2 plus1fil\rightskip=#3 plus1fil\parfillskip=0pt}%
+		{% else
+		\IfLit '#1'='left'%
+			{%then
+			\leftskip=#2\rightskip=#3 plus1fil}%
+			{%else
+			\IfLit '#1'='right'%
+				{% then
+				\leftskip=#2 plus1fil\rightskip=#3\parfillskip=0pt}%
+				{%else
+				\IfLit '#1'='label'%
+					{% then
+			  		\leftskip=#2 plus1fil\rightskip=#3 plus-1fil\parfillskip=0pt plus2fil\parindent=0pt}%
+					{%else - block alignment
+					\leftskip=#2\rightskip=#3}% jinak zarovnat do bloku
+				}%
+			}%
+		}%
+}%
+
+\def\SetAlignment#1{%
+	\def\\{\break}%
+	\IfLit '#1'='center'%
+		{% then
+		\leftskip=1\leftskip plus1fil\rightskip=1\rightskip plus1fil\parfillskip=0pt\parindent=0pt}%
+		%\leftskip=1\leftskip plus1fil\rightskip=1\rightskip plus1fil\parfillskip=0pt}%
+		{% else
+		\IfLit '#1'='left'%
+			{%then
+			\leftskip=1\leftskip\rightskip=1\rightskip plus1fil}%
+			{%else
+			\IfLit '#1'='right'%
+				{% then
+				\leftskip=1\leftskip plus1fil\rightskip=1\rightskip\parfillskip=0pt}%
+				{%else
+				\def\\{\hfil\break}%
+				\IfLit '#1'='label'%
+					{% then
+			  		\leftskip=1\leftskip plus1fil\rightskip=1\rightskip plus-1fil\parfillskip=0pt plus2fil\parindent=0pt}%
+					{}%else - block alignment%
+				}%
+			}%
+		}%
+}%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%									Styles
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% parameters of paragraph style:
+% - font
+% - alignment
+% - line spacing
+% - top, bottom space (additive, unskip + new)
+% - first line, left, right indent
+% - allowed to break after the paragraph is finished
+% - keep lines together
+% - forward text, text behind
+% - these two last mechanisms solve: numbering, TOC, references, remembering text
+%	=> preactions, postactions
+
+%% Creates a new style.
+%% It's properties can be later changed by using \SetStyleParam, params:
+% 1 - name of the style
+% 2 - font alias to be used (declared in MkFontTenAlias)
+\def\CreateNewStyle#1#2{%
+	\SetVar{STYLE::#1Exists}{}%
+	\DeclarePList{STYLE::#1}%
+	\DeclareStack{STYLE::#1::PreHandlerStack}%
+	\DeclareStack{STYLE::#1::PostHandlerStack}%
+	% setting default params and their values
+	\SetStyleParam{#1}[Font]={#2}%
+	\SetStyleParam{#1}[Alignment]={left}%
+	\SetStyleParam{#1}[LineSpacingFactor]={1.0}%
+	\SetStyleParam{#1}[ExtraTopSpace]={0pt}%
+	\SetStyleParam{#1}[ExtraBottomSpace]={\parskip}%
+	\SetStyleParam{#1}[FirstLineIndent]={0pt}%
+	\SetStyleParam{#1}[LeftIndent]={0pt}%
+	\SetStyleParam{#1}[RightIndent]={0pt}%
+	\SetStyleParam{#1}[BreakAllowed]={YES}%
+	\SetStyleParam{#1}[InVBox]={NO}%
+	\SetStyleParam{#1}[EndPar]={YES}%
+	\SetStyleParam{#1}[Prefix]={}%
+	\SetStyleParam{#1}[Postfix]={}%
+	\SetStyleParam{#1}[PreActions]={}%
+	\SetStyleParam{#1}[PostActions]={}%
+	\SetStyleParam{#1}[SuppresNextParIndent]={NO}%
+	\SetStyleParam{#1}[SoftTopSpace]={NO}%
+	\SetStyleParam{#1}[Counter]={}%
+	\SetStyleParam{#1}[PreHandlerStackName]={STYLE::#1::PreHandlerStack}%
+	\SetStyleParam{#1}[PostHandlerStackName]={STYLE::#1::PostHandlerStack}%
+}%
+
+%% Creates a new style by deriving its properties from an existing one.
+%% These can be later changed by using \SetStyleParam, params:
+% 1 - name of the style from which to derive
+% 2 - name of the new style
+% note:
+% - content of HandlerStacks is cloned but the macro names are not
+\def\DeriveNewStyle#1->#2{{%
+	\TestStyleExists{#1}%
+	\SetVar{STYLE::#2Exists}{}%
+	\DeclarePList{STYLE::#2}%
+	\DeclareStack{STYLE::#2::PreHandlerStack}%
+	\DeclareStack{STYLE::#2::PostHandlerStack}%
+	\def\SetDstStyleParam##1{\CopyStyleParam #1[##1]->{#2}}%
+	\ClonePList {STYLE::#1}-\SetDstStyleParam->{STYLE::#2}%
+	\CloneStack {STYLE::#1::PreHandlerStack}->{STYLE::#2::PreHandlerStack}%
+	\CloneStack {STYLE::#1::PostHandlerStack}->{STYLE::#2::PostHandlerStack}%
+	\SetStyleParam{#2}[PreHandlerStackName]={STYLE::#2::PreHandlerStack}%
+	\SetStyleParam{#2}[PostHandlerStackName]={STYLE::#2::PostHandlerStack}}}%
+
+%% tests whether given style exists, if it does not, error message is printed
+%% out, params:
+% 1 - style in which we are interested
+% 2 - error message
+\def\TestStyleExists#1{\IfSetVar{STYLE::#1Exists}{}{\FatalErrMsg{Style #1 does not exist, declare it.}}}%
+
+%% typesets given text using given style, params:
+% 1 - style to be used
+% 2 - text to be typeset
+\def\Style#1#2{%
+	\TestStyleExists{#1}%{Style #1 not found, declare it}%
+	\GetStyleParam{#1}[PreActions]{% performed locally
+	\IfVar STYLE::#1Counter=''{}{\hIncrementCounter{\GetStyleParam{#1}[Counter]}}%
+	\SetFont{\GetStyleParam{#1}[Font]}%
+	\ex\ifdim\GetVar{STYLE::#1ExtraTopSpace}=0pt\relax\else
+		\IfVar STYLE::#1SoftTopSpace='YES'{\message{doing softtopspace}\let\next\vskip}{\let\next\vglue}%
+		\next\GetStyleParam{#1}[ExtraTopSpace]%
+	\fi
+	%\IfLit '#1'='Normal'{Nazdar}{}%
+	% conditionally eat last skip
+	%\IfVar STYLE::#1RemovePreviousTopSpace='YES'{\removelastskip}{}%
+	% conditionally insert top space and set bottom space
+	\baselineskip=1.2em%
+	\baselineskip=\GetStyleParam{#1}[LineSpacingFactor]\baselineskip%
+	\parindent=\GetVar{STYLE::#1FirstLineIndent}%
+	% setting left and right skips
+	\SetLeftRightSkip
+		{\GetVar{STYLE::#1Alignment}}%
+		{\GetVar{STYLE::#1LeftIndent}}%
+		{\GetVar{STYLE::#1RightIndent}}%
+	\IfVar STYLE::#1InVBox='YES'%
+		% then
+		{\def\StyPreA{\vbox\bgroup}\def\StyPostA{\egroup}}%
+		% else
+		{\let\StyPreA=\relax\let\StyPostA=\relax}%
+	\StyPreA
+	\def\invokeHandler##1{##1{#2}}%
+	%
+	\ForEachStackElem{STYLE::#1::PreHandlerStack}\invokeHandler
+	\GetVar{STYLE::#1Prefix}%
+	#2%
+	\GetVar{STYLE::#1Postfix}%
+	\ForEachStackElem{STYLE::#1::PostHandlerStack}\invokeHandler
+	%
+	\StyPostA
+	\IfVar STYLE::#1EndPar='YES'{\par}{}} % end of group
+	\IfVar STYLE::#1BreakAllowed='NO'{\nobreak}{}%
+	\ex\ifdim\GetVar{STYLE::#1ExtraBottomSpace}=0pt\else
+		\ex\vskip\GetVar{STYLE::#1ExtraBottomSpace}\fi
+	\IfVar STYLE::#1SuppresNextParIndent='YES'{\SuppresNextParIndent}{}%
+	\GetVar{STYLE::#1PostActions}%
+}%
+
+%% sets parameter influencing current behaviour of a declared style,
+%% using this routine new param may be added to the already existing ones, params:
+% 1 - style name
+% 2 - style param
+% 3 - param's value
+\long\def\SetStyleParam#1[#2]=#3{%
+	\TestStyleExists{#1}%
+	\AppendToPList{STYLE::#1}{#2}%
+	\SetVar{STYLE::#1#2}{#3}}%
+
+\long\def\eSetStyleParam#1[#2]=#3{%
+	\TestStyleExists{#1}%
+	\AppendToPList{STYLE::#1}{#2}%
+	\eSetVar{STYLE::#1#2}{#3}}%
+
+\long\def\PostfixStyleParam#1[#2]<#3{%
+	\TestStyleExists{#1}%
+	\PostfixVar{STYLE::#1#2}{#3}}%
+
+\long\def\PrefixStyleParam#1[#2]<#3{%
+	\TestStyleExists{#1}%
+	\PrefixVar{STYLE::#1#2}{#3}}%
+
+\long\def\SoftSetStyleParam#1[#2]=#3{%
+	\IfSetVar{STYLE::#1#2}{}{\SetStyleParam#1[#2]={#3}}%
+}
+
+\long\def\eSoftSetStyleParam#1[#2]=#3{%
+	\IfSetVar{STYLE::#1#2}{}{\eSetStyleParam#1[#2]={#3}}%
+}
+
+%% copies environment parameter into a new environment under the same name
+% 1 - original envi name
+% 2 - name of the parameter
+% 3 - new envi name
+\def\CopyStyleParam#1[#2]->#3{%
+	%\DPRINT{Copying style params: #1[#2]->#3}%
+	\TestStyleExists{#1}\TestStyleExists{#3}%
+	%\AppendToPList{STYLE::#3}{#2}%
+	\CopyVar {STYLE::#1#2}->{STYLE::#3#2}}%
+
+%% returns value of a style's parameter, params:
+% 1 - style name
+% 2 - param name
+\def\GetStyleParam#1[#2]{%
+	\TestStyleExists{#1}%
+	\TestVarExists{STYLE::#1#2}%
+	\GetVar{STYLE::#1#2}}
+
+%% registers pre-handler by style #1, params:
+% 1 - style name
+% 2 - handler to be registered - the name is remembered, keep the definition
+% visible
+\def\AddStylePreHandler#1#2{{%
+	\TestStyleExists{#1}%
+	\PushBack{STYLE::#1::PreHandlerStack}{#2}}}%
+	%\edef\hlpD{\ex\RemoveLeadingGroup\string#2}%
+	%\ex\hlpC\ex{\hlpD}}}% storing just the textual string not the macro self
+
+%% registers post-handler by style #1, params:
+% 1 - style name
+% 2 - handler to be registered - the name is remembered, keep the definition
+% visible
+\def\AddStylePostHandler#1#2{{%
+	\TestStyleExists{#1}%
+	\PushBack{STYLE::#1::PostHandlerStack}{#2}}}%
+	%\ex\hlpC{#2}}}% storing just the textual string not the macro self
+
+\def\ClearStyleHandlers#1{\ClearStylePreHandlers{#1}\ClearStylePostHandlers{#1}}%
+\def\ClearStylePreHandlers#1{\ClearStack{STYLE::#1::PreHandlerStack}}%
+\def\ClearStylePostHandlers#1{\ClearStack{STYLE::#1::PostHandlerStack}}%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% environments %%%%%%%%%%%%%%%
+
+%% tests whether given environment exists
+\def\TestEnviExists#1{\IfSetVar{ENVI::#1Exists}{}{\FatalErrMsg{Environment #1 does not exist, declare it.}}}%
+
+%% sets environment's parameters, params:
+% 1 - envi's name
+% 2 - param's name
+% 3 - param's value
+\long\def\SetEnviParam#1[#2]=#3{%
+	\TestEnviExists{#1}%
+	\AppendToPList{ENVI::#1}{#2}%
+	\SetVar{ENVI::#1#2}{#3}
+}%
+
+%% sets environment's parameters if it exists, otherwise the parameter is
+% ignored, params:
+% 1 - envi's name
+% 2 - param's name
+% 3 - param's value
+\long\def\softSetEnviParam#1[#2]=#3{%
+	\IfSetVar{ENVI::#1Exists}{%
+		\AppendToPList{ENVI::#1}{#2}%
+		\SetVar{ENVI::#1#2}{#3}
+	}{}%
+}%
+
+%% copies environment parameter into a new environment under the same name
+% 1 - original envi name
+% 2 - name of the parameter
+% 3 - new envi name
+\def\CopyEnviParam#1[#2]->#3{{%
+	\TestEnviExists{#1}\TestEnviExists{#3}%
+	%\NewLine appending #2 to ENVI::#3\NewLine
+	% TODO: create param in PList if necessary
+	%\AppendToPList{ENVI::#3}{#2}%
+	\CopyVar {ENVI::#1#2}->{ENVI::#3#2}}}%
+
+%% return's environemnt's parameter value contained, params:
+% 1 - envi's name
+% 2 - param's name
+\def\GetEnviParam#1[#2]{%
+	\TestEnviExists{#1}%
+	\TestVarExists{ENVI::#1#2}%
+	\GetVar{ENVI::#1#2}}%
+
+%% prefixes envi param by given text, params:
+% 1 - envi name
+% 2 - envi param to be prefixed
+% 3 - prefix self
+\long\def\PrefixEnviParam#1[#2]<#3{%
+	\TestEnviExists{#1}%
+	\PrefixVar{ENVI::#1#2}{#3}}%
+
+%% postfixes envi param by given text, params:
+% 1 - envi name
+% 2 - envi param to be prefixed
+% 3 - postfix self
+\long\def\PostfixEnviParam#1[#2]<#3{%
+	\TestEnviExists{#1}%
+	\PostfixVar{ENVI::#1#2}{#3}}%
+
+%% returns current envi name
+\def\GetCurrEnviName{\GetVar{ENVI::CurrEnvi}}%
+
+%% sets value of a parameter of current envi, params:
+% 1 - param name
+% 2 - param value
+\def\SetCurrEnviParam#1#2{\SetVar{ENVI::\GetCurrEnviName#1}{#2}}%
+
+\def\GetEnviParamInToks#1#2[#3]{%
+	\TestEnviExists{#2}%
+	\GetVarInToks{#1}{ENVI::#2#3}}%
+
+%% returns value of a parameter from the current environment, params:
+% 1 - param name
+\def\GetCurrEnviParam[#1]{%
+	\GetEnviParam\GetCurrEnviName[#1]}%}
+%
+
+%% creates a new environment, params:
+% 1 - name of the environment
+% 2 - preactions: performed locally
+% 3 - postactions: performed locally
+\long\def\CreateNewEnvironment#1#2#3{%
+	\SetVar{ENVI::#1Exists}{}%
+	\DeclarePList{ENVI::#1}%
+	\SetEnviParam{#1}[PreActions]={#2}%
+	\SetEnviParam{#1}[PostActions]={#3}%
+	\SetEnviParam{#1}[ExtraTopSpace]={0pt}%
+	\SetEnviParam{#1}[ExtraBottomSpace]={0pt}%
+}%
+
+%% creates a new environment by deriving its properties from an existing one, params:
+% 1 - name of the environment from which to derive
+% 2 - name of the new environment
+\def\DeriveNewEnvironment#1->#2{%
+	\TestEnviExists{#1}%
+	\SetVar{ENVI::#2Exists}{}%
+	\DeclarePList{ENVI::#2}%
+	\def\SetDstEnviParam##1{\CopyEnviParam {#1}[##1]->{#2}}%
+	\ClonePList ENVI::#1-\SetDstEnviParam->{ENVI::#2}%
+	%\ForEachPListElem{ENVI::#1}\SetDstEnviParam
+}%
+
+%% begins environment: performs pre-actions
+\def\Begin#1{%
+	\TestEnviExists{#1}%
+	\par %?
+	\bgroup\lSetVar{ENVI::CurrEnvi}{#1}%
+	\ifdim\GetCurrEnviParam[ExtraTopSpace]=0cm\else\vskip\GetCurrEnviParam[ExtraTopSpace]\fi
+	\GetEnviParam{#1}[PreActions]}%
+
+%% end environment: performs post-actions
+\def\End#1{%
+	\TestEnviExists{#1}%
+	\GetEnviParam{#1}[PostActions]%
+	\par
+	\ifdim\GetCurrEnviParam[ExtraBottomSpace]=0cm\else\vskip\GetCurrEnviParam{ExtraBottomSpace}\fi
+	\egroup
+}%
+
+\LoadFile{style_settings.tex}

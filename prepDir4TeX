@@ -1,0 +1,124 @@
+#!/bin/bash
+# prepares directory for use with TeX either in Czech or English language
+# args:
+# 1 - language: CZ, EN
+# 2 - doc name
+
+
+CZECH=CZ
+ENGLISH=EN
+LANG=$1
+SIMPLETEX_DIR=~/develop/tex/simpleTeX
+
+if [ $# -ne 2 ]; then
+	echo invalid number of arguments
+	echo expecting arguments:
+	echo 1 - language to be used, currently supported are: CZ, EN
+	echo 2 - name of the document
+	exit
+fi
+
+DOC_NAME=$2
+
+FILES_TO_LINK=`ls $SIMPLETEX_DIR/*.pkg $SIMPLETEX_DIR/simpleTeX.tex`
+FILES_TO_COPY=`ls $SIMPLETEX_DIR/*_settings.tex`
+
+echo creating links...
+for FILE in $FILES_TO_LINK; do
+	ln -s $FILE `basename $FILE`
+done
+echo copying customization files...
+cp $FILES_TO_COPY .
+
+if [ $1 = $CZECH ]; then
+	# czech language
+	TEXER=csplain
+	FIG_DIR=obrazky
+elif [ $1 = $ENGLISH ]; then
+	# english language
+	TEXER=tex
+	FIG_DIR=figures
+fi
+
+echo creating content of TeX files...
+cat > ${DOC_NAME}_macros.tex <<EOF
+% (C) Pavel Kryl, 2002
+% put here your custom macros
+
+EOF
+
+cat > $DOC_NAME.tex <<EOF
+% (C) Pavel Kryl, 2002
+\\input simpleTeX
+\\LoadPackage{locales}
+\\LoadPackage{styles}
+\\LoadPackage{docenvi}
+%\\LoadPackage{rejstrik}
+\\LoadPackage{boxmanip}
+\\LoadPackage{footnotes}
+\\LoadPackage{tables}
+\\LoadPackage{figures}
+
+%\\LoadPackage{cbtex}
+%\\LoadPackage{literature}
+%\\SetEnviParam LiteratureList[File]={literature.tex}%
+
+
+\\SetLang{$LANG}
+
+\\LoadFile{${DOC_NAME}_macros.tex}
+
+\\Begin{Document}
+%\\MakeLiteratureRefs
+%\\AktivujObsah
+\\LoadFile{${DOC_NAME}_src.tex}
+%\\MakeLiteratureList
+\\End{Document}
+\\bye
+EOF
+
+cat > ${DOC_NAME}_src.tex <<EOF
+% (C) Pavel Kryl, 2002
+% put your text here as needed, no \\bye is neccessary...
+
+EOF
+
+cat > literature.tex <<EOF
+% (C) Pavel Kryl, 2002
+% put you publications here, params:
+% 1 - id
+% 2 - author
+% 3 - title
+% 4 - additional info
+%\Publication{}{}{}{}
+%\Publication{}{}{}{}
+EOF
+
+echo creating Makefiles...
+cat > Makefile <<EOF
+# (C) Pavel Kryl, 2002
+include Makefile.psmanip
+.PHONY: clean all default pdfs pss postscripts
+
+POSTSCRIPTS=$DOC_NAME.ps ${DOC_NAME}_booklet.ps ${DOC_NAME}_printbatch1.ps ${DOC_NAME}_printbatch2A.ps ${DOC_NAME}_printbatch2B.ps
+PDFS=\$(subst .ps,.pdf,\$(POSTSCRIPTS))
+
+default: $DOC_NAME.dvi
+
+all: $DOC_NAME.dvi postscripts pdfs
+
+pss postscripts: \$(POSTSCRIPTS)
+
+pdfs: \$(PDFS)
+
+$DOC_NAME.dvi: $DOC_NAME.tex ${DOC_NAME}_macros.tex ${DOC_NAME}_src.tex *.pkg *_settings.tex #$FIG_DIR/*
+	#make -C $FIG_DIR
+	mkRefedDvi $TEXER $DOC_NAME.tex
+
+clean::
+	#make -C clean $FIG_DIR
+	- rm *.ps *.dvi *.log *.refs *.toc *.pdf
+EOF
+mkPsMf
+
+echo simpleTeX dir ... done

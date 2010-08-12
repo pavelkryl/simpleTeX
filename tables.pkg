@@ -1,0 +1,15 @@
+\LoadPackage{styles}
+
+\CreateNewEnvironment{Table}{\setbox0=\vbox\bgroup
+	\def\TabLine{\noalign{\smallskip\hrule}}%
+	\let\par=\cr \obeylines \halign\bgroup &\hskip20pt ##\hfil\qquad\cr}%
+	{\egroup\egroup%
+	\EnlargeBox0{0pt}{0pt}{0pt}{4pt}%
+	\FillBoxBGColor0{0 0 0 0.1}%
+	\UOverruleBox0{.6pt}\leftskip=0pt\hsize=\GetDocVar{TextWidth}\LayoutBox0{\GetCurrEnviParam[Alignment]}}
+
+\SetEnviParam Table[ExtraBottomSpace]={4pt}
+\SetEnviParam Table[Alignment]={center}
+
+\DeriveNewEnvironment Table->{LTable}
+\SetEnviParam LTable[Alignment]={left}

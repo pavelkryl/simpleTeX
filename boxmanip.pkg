@@ -1,0 +1,92 @@
+\LoadPackage{colormanip}
+%% package manipulating the boxes
+
+%% Creates new text box of given width, the given text is typesetted as
+% paragraph inside such a box, params:
+% 1 - number of the textbox (range 0-9)
+% 2 - width of the textbox
+% 3 - content (text) of the textbox
+\long\def\ParBox#1#2#3{{%
+	\hsize=#2%
+	\global\setbox#1=\vbox{#3}%
+}}
+
+%% creates new text box with given text, the given text is typesetted into one
+% line, no matter how long it is (thus it can runaway ignoring currently set page
+% parameters), params:
+% 1 - number of the box, where to save the text
+% 2 - text to be saved int he box
+\def\LineBox#1#2{\setbox#1=\hbox{#2}}
+
+%% enlarge box by padding it from left, right, top, bottom
+%% params:
+% 1 - number of the box to be padded
+% 2 - left
+% 3 - top
+% 4 - right
+% 5 - bottom
+\def\EnlargeBox#1#2#3#4#5{{%
+	\ifvbox#1%
+		\global\setbox#1=\vbox{\kern#3\hbox{\kern#2\box#1\kern#4}\kern#5}%
+	\else
+		\global\setbox#1=\hbox{\kern#2\vbox{\kern#3\box#1\kern#5}\kern#4}%
+	\fi
+}}%
+%% uniform enlarge
+\def\UEnlargeBox#1#2{\EnlargeBox#1{#2}{#2}{#2}{#2}}
+
+%% makes lines of the given width around box, params:
+% 1 - box number
+% 2 - left line width
+% 3 - top line
+% 4 - right line
+% 5 - bottom line
+\def\OverruleBox#1#2#3#4#5{%
+	\ifvbox#1%
+		\global\setbox#1=\vbox{\hbox{\vbox{\hrule height#3 depth0pt\hbox{\vrule width#2\box#1\vrule width#4}\hrule height0pt depth#5}}}%
+	\else
+		\global\setbox#1=\hbox{\vbox{\hbox{\vrule width#2\vbox{\hrule height#3depth 0pt\box#1\hrule height 0pt depth#5}\vrule width#4}}}%
+	\fi
+}%
+%% uniform overrule
+\def\UOverruleBox#1#2{\OverruleBox#1{#2}{#2}{#2}{#2}}
+
+%% fills background of the given box with the given color, params:
+% 1 - number of the box to be filled
+% 2 - color in CMYK notation to be used
+\def\FillBoxBGColor#1#2{%
+	\ifvbox#1%
+		\global\setbox#1=\vbox{\hbox{\Color{#2}{\rlap{\vrule height\ht#1 depth\dp#1 width\wd#1}}\box#1}}%
+	\else
+		\global\setbox#1=\hbox{\Color{#2}{\rlap{\vrule height\ht#1 depth\dp#1 width\wd#1}}\box#1}%
+	\fi
+}%
+
+%% prints out box, params:
+% 1 - number of the box
+%\def\PrintBox#1{\ifvbox#1\unvcopy#1\else\unhcopy#1\fi}%
+\def\PrintBox#1{\copy#1}%
+
+%% prints out box using given layout, params:
+% 1 - number of the box to be printed
+% 2 - layout: center, left, right (if not understood left alignment used)
+\def\LayoutBox#1#2{%
+	\let\linemacro=\leftline
+	\IfLit '#2'='center'{\let\linemacro=\centerline}{%
+		\IfLit '#2'='right'{\let\linemacro=\rightline}{}%
+	}%
+	\par\noindent\linemacro{\copy#1}%
+}%
+
+%% compensates box height to keep radkovy rejstrik in ordnung, params:
+% 1 - box number
+% 2 - LineSpacingFactor used in the box related to \hardlineskip
+\def\CompensateBoxHeight#1#2{%
+	\ifdim\ht#1>\hardlineskip
+		\hlpCount=\ht#1
+		\divide\hlpCount by \hardlineskip
+		\advance\hlpCount by 1%	- number of full rows taken by the text
+		\setbox#1=\vbox to\hlpCount\hardlineskip{\vfill\unvbox#1} % musime vbox roztahnout, aby zabiral dany pocet radku
+				% ale ucari bylo posazeno na ucari radkove osnovy + mezera shora, to udelame vyplnenim pruznou vyplni shora
+	\fi
+}

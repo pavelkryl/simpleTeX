@@ -1,0 +1,31 @@
+%% variables used by this document class
+\LoadFile{tahak_settings.tex}
+%% Items
+\def\itemitemitem{\par\indent\indent\hangindent3\parindent\textindent}
+\def\Item{\item{\GetVar{ItemBullet}}}%
+\def\ItemItem{\itemitem{\GetVar{ItemItemBullet}}}
+\def\ItemItemItem{\itemitemitem{\GetVar{ItemItemItemBullet}}}
+\def\Terminus#1{\Blue{\Italic{#1}}}
+\def\ETerminus#1{\Blue{\Italic{#1}}\GetVar{TerminusSeparator}}
+% items to be aliased for itemitem
+\def\SetItemItem#1{\let\ItemItem=#1}%
+\def\EmphItemItem#1:{\itemitem{\GetVar{ItemItemBullet}}\Bold{#1} }%
+\def\CodeItemItem#1:{\itemitem{\GetVar{ItemItemBullet}}{\SetFont{ShortVerbatimFont}#1}}%
+\def\TerminusItemItem#1{\par\indent\hangindent3\parindent{\GetVar{ItemItemBullet}\enspace\ETerminus{#1}}}
+\def\CmdItemItem#1{\par\indent\hangindent3\parindent{\GetVar{ItemItemBullet}\enspace\SetFont{ShortVerbatimFont}#1}}
+\def\CmdLine#1{\par\noindent{\LineBox0{\SetFont{VerbatimFont}#1}\UEnlargeBox0{5pt}\wd0=\hsize\FillBoxBGColor0{0 0 0 .2}\PrintBox0}}
+\parindent=0pt
+
+\def\ENL{\End{List123}\egroup}
+%% abbreviations
+\def\BTab{\Begin{Table}}
+\def\ETab{\End{Table}}
+\def\Fig#1{\LbllessFigure{#1.eps}{*\GetVar{FigMag}}{#1}}%
+\def\WFig#1#2{\LbllessFigure{#2.eps}{#1}{#2}}%
+\def\IFig#1#2{\indent{\ImmFigure{#1.eps}{*\GetVar{FigMag}}{#2}}}%
+\def\SetTermII{\let\ItemItem\TerminusItemItem}
+\def\SetCmdII{\let\ItemItem\CmdItemItem}
+\def\SetNmbII{\Begin{List123}\bgroup\def\ItemItem{\Item}\aftergroup\ENL}
+\def\SetNmbI{\Begin{List123}\advance\leftskip by -10pt\bgroup\aftergroup\ENL}
+\def\Pub#1{[\GetPubNum{#1}]}
+\def\PubPg#1#2{[\GetPubNum{#1}, str. #2]}

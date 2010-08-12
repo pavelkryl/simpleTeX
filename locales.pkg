@@ -1,0 +1,16 @@
+%% this file includes necessary definitions place dependent
+
+%% use this macro to activate extensions specific for given language
+\def\SetLang#1{\csname LANG::#1\endcsname}%
+
+\def\DefLangSpecs#1#2{\ex\def\csname LANG::#1\endcsname{#2}}%
+
+%% adjust as needed
+\DefLangSpecs{CZ}{%
+	\chyph
+	\softSetEnviParam Figure[Dir]={obrazky}%
+}%
+
+\DefLangSpecs{EN}{%
+	\softSetEnviParam Figure[Dir]={figures}%
+}%

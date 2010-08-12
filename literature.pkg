@@ -1,0 +1,56 @@
+\LoadPackage{counters}
+
+%% declares publication, params:
+% 1 - id to be used in references
+% 2 - author
+% 3 - name of the publication
+% 4 - publisher and additional information
+\def\Publication#1#2#3#4{\message{!!!!alias Publication!!!!!}}%
+
+%%%%%%%%%%%%%% Numbering of the literature based on an ID %%%%%%%%%%%%%%%%%
+%% expands to the number of Publication identified by #1
+\def\eSetPubNum#1#2{\eSetLitVar{#1}{#2}}
+\def\GetPubNum#1{\GetLitVar{#1}}
+\DeclareCounter{PublicationCounter}
+
+\def\SetLitVar#1#2{\SetVar{Literature::#1}{#2}}
+\def\eSetLitVar#1#2{\eSetVar{Literature::#1}{#2}}
+\def\GetLitVar#1{\GetVar{Literature::#1}}
+
+%% processes publication by defining number based on a publication's ID
+\def\DeclarePublication#1#2#3#4{%
+        \IncrementCounter{PublicationCounter}%
+		\eSetPubNum{#1}{\GetCounter{PublicationCounter}}}
+
+% \let\Publication=\DeclarePublication
+
+%% typesets the publication as it should be done in the literature list
+% precond: numbers based on publication IDs are already generated
+\def\TypesetPublication#1#2#3#4{\ParedItem{[\GetPubNum{#1}]}%
+	\IfLit '#2'=''{}{#2,}%
+	\IfLit '#3'=''{}{ \Italic{#3}, }%
+	#4\par}%
+
+\def\SetLitFile#1{\SetEnviParam LiteratureList[File]={#1}}
+
+%% reading the literature list, declaration of numbers related to publications' IDs
+\def\MakeLiteratureRefs{%
+	\let\Publication=\DeclarePublication
+	\input \GetEnviParam {LiteratureList}[File] %
+}
+
+%% typesets publications read from literature_list.tex
+% suitable for a real literature list, no title is generated, only plain list
+\def\MakeLiteratureList{%
+	\Begin{LiteratureList}%
+	\def\Publication{\Item}%
+	\input \GetCurrEnviParam[File] %
+	\End{LiteratureList}%
+}
+
+\DeriveNewEnvironment{CommonItemEnvironment}->{LiteratureList}
+\SetEnviParam{LiteratureList}[ExtraLeftMargin]={2em}
+\SetEnviParam{LiteratureList}[Item]={\TypesetPublication}
+\SetEnviParam{LiteratureList}[ItemTextSpace]={1em}
+\SetEnviParam{LiteratureList}[ExtraLeftMargin]={1cm}
+\SetEnviParam{LiteratureList}[File]={literature.tex}

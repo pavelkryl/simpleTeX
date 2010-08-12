@@ -1,0 +1,9 @@
+\LoadFile{style_settings.tex}
+
+\CreateNewStyle{Label}{NormalFont}
+\SetStyleParam Label[Alignment]={label}
+\SetStyleParam Label[Prefix]={\SwitchToShape{Italic}}
+
+%% prints label, params:
+% 1 - label text
+\def\Label#1{\Style{Label}{#1}}

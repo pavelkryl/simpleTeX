@@ -1,0 +1,27 @@
+% (C) Pavel Kryl, 2002
+% put here your custom macros
+
+%\SetVar{HeaderContent}{Tahák }
+
+%% shortcuts for styles and style switches
+\def\Tema#1{\Style{Heading1}{#1}}%
+\def\Nadpis#1{\Style{Heading2}{#1}}%
+\def\PodNadpis#1{\Style{Heading3}{#1}}%
+\def\Duraz#1{\Bold{#1}}
+\def\b#1 {\Duraz{#1} }
+\def\e#1 {\Italic{#1} }
+\def\Pojem#1{\Blue{\Italic{#1}}}
+\def\RArr{$\rightarrow$ }
+\def\Poucka#1{\Box{!! #1 !!}{0 0 0 0}}
+\def\Definice#1{\Box{#1}{0 0 0 0.1}}
+% args - 
+% 1 - text
+% 2 - bgcolor
+\def\Box#1#2{
+	\ParBox0{.8\hsize}{\SetAlignment{center}\Bold{#1}}%
+	\UEnlargeBox0{3pt}%
+	\FillBoxBGColor0{#2}%
+	\UOverruleBox0{1pt}%
+	\strut
+	\LayoutBox0{center}%
+}

@@ -1,0 +1,249 @@
+\LoadPackage{colormanip}
+%%%%%%%%%%%%%%%%%%%%%%%%% Package manipulating the fonts %%%%%%%%%%%%%%%%%%%%%
+%	_typical usage_
+%
+% \SafeFileInclude{fonts}
+% ....
+%
+% \SetFontFamily{Helvetica}
+% \MkFontTenAlias{Heading1Font}{Bold}{scaled \magstep2}
+% \MkFontTenAlias{Heading2Font}{Regular}{scaled \magstep1}
+%
+% \SetFontFamily{Palatino}
+% \MkFontTenAlias{Heading3Font}{BoldItalic}{at 12pt}
+% \MkFontTenAlias{NormalFont}{Regular}{}	% implicitly at 10pt
+% ...
+%
+% now you can use these names as font names for styles for example,
+% or simply by typing: {\SetFont{Heading1Font} This is heading 1}
+%
+% switching to another style should be performed using switches:
+% \Italic{}, \Regular{}, \Bold, \Slanted{}, \BoldItalic{}, \TerminalType{}
+% ^- these switches will include italic correction where necessary
+% you may also use original \it, \rm, \bf, \tt which will handle several things,
+% but the italic correction
+%
+%%%%%%%%%%%%%%%%%%%%%%%%% Package manipulating the fonts %%%%%%%%%%%%%%%%%%%%%
+
+%% hash table mapping chosen font to real file names:
+\SetVar{FF::ComputerModern}{csfonts}%
+\SetVar{FF::Palatino}{cpalatin}%
+\SetVar{FF::Avantgarde}{cavantga}%
+\SetVar{FF::Helvetica}{chelvet}%
+\SetVar{FF::NewCentury}{cncent}%
+\SetVar{FF::Times}{ctimes}%
+\SetVar{FF::Bookman}{cbookman}%
+
+%% sets complete name of the bold+italic font of given font family (FF), params:
+% 1 - name of the font family (Palatino, Avantgarde,...)
+% 2 - name of the file, where the combined font resides
+\def\SetBoldItalicFFFilename#1#2{\SetVar{BIFont#1}{#2}}%
+
+%% test whether the bold italic font is set
+\def\IfSetBoldItalicFFFilename#1#2#3{\IfSetVar{BIFont#1}{#2}{#3}}%
+
+%% returns name of the bold+italic font of given font family (FF), params:
+% 1 - name of the font family
+\def\GetBoldItalicFFFilename#1{\GetVar{BIFont#1}}%
+
+\SetBoldItalicFFFilename{Palatino}{pplbi8z}%
+\SetBoldItalicFFFilename{ComputerModern}{csbxti10}%
+\SetBoldItalicFFFilename{Helvetica}{phvbo8z}%
+\SetBoldItalicFFFilename{Avantgarde}{pagdo8z}%
+\SetBoldItalicFFFilename{NewCentury}{pncbi8z}%
+\SetBoldItalicFFFilename{Times}{ptmbi8z}%
+\SetBoldItalicFFFilename{Bookman}{pbkdi8z}%
+
+\def\SetNewSwitchOfSC#1#2{\ex\def\csname switch::#1\endcsname{#2}}%
+\SetNewSwitchOfSC{it}{Italic}%
+\SetNewSwitchOfSC{bf}{Bold}%
+\SetNewSwitchOfSC{rm}{Regular}%
+\SetNewSwitchOfSC{sl}{Slanted}%
+\SetNewSwitchOfSC{tt}{TerminalType}%
+\SetNewSwitchOfSC{bi}{BoldItalic}%
+\def\GetNewSwitchOfSC#1{\csname switch::#1\endcsname}%
+
+%% adjusting \it, \rm, \bf, \tt
+\def\RedefFontSwitch#1{\ex\OverwriteNoParMacro\csname#1\endcsname{\SwitchToShape{\GetNewSwitchOfSC{#1}}}}%
+\RedefFontSwitch{it}%
+\RedefFontSwitch{sl}%
+\RedefFontSwitch{bf}%
+\RedefFontSwitch{rm}%
+\RedefFontSwitch{tt}%
+
+\def\NumberToWord#1{\ifcase#1\or one\or two\or three\or four\or five\or
+six\or seven\or ten\else
+\message{NumberToWord: unsupported conversion of #1}\fi}%
+
+%% returns font name of the current font using given style, params:
+% 1 - style (rm,it,bf,..)
+%\def\GetCurrFontStyleName#1{\ex\fontname\csname ten#1\endcsname}
+
+%% creating shortcuts for full names
+\def\scItalic{it}%
+\def\scBold{bf}%
+\def\scRegular{rm}%
+\def\scSlanted{sl}%
+\def\scTerminalType{tt}%
+\def\scBoldItalic{bi}%
+
+%% returns shortcut for full style name, params:
+% 1 - style name: Bold, Italic, Regular, Slanted,...
+\def\GetSC#1{\csname sc#1\endcsname}%
+
+%% sets font params of size 10pt under name #1, defined by latter params
+%% you should change font family if you want to using: \SetFontFamily, params:
+% 1 - the alias for the set font params
+% 2 - font style (Italic, Bold, Regular, ...)
+% 3 - font size: at size, scaled\magstep1
+\def\MkFontTenAlias#1#2#3{%
+	%\ex\font\csname FONT::#1\endcsname=\ex\fontname\csname ten\GetSC{#2}\endcsname\space#3%
+	\ex\font\csname FONT::Regular#1\endcsname=\fontname\tenrm\space#3%
+	\ex\font\csname FONT::Italic#1\endcsname=\fontname\tenit\space#3%
+	\ex\font\csname FONT::Slanted#1\endcsname=\fontname\tensl\space#3%
+	\ex\font\csname FONT::TerminalType#1\endcsname=\fontname\tentt\space#3%
+	\ex\font\csname FONT::Bold#1\endcsname=\fontname\tenbf\space#3%
+	\ex\font\csname FONT::BoldItalic#1\endcsname=\GetBoldItalicFFFilename{\GetVar{CurrentFontFamily}} #3%
+	\SetVar{FONT::#1DefaultStyle}{#2}%
+	\SetVar{FONT::#1FontFamily}{\GetVar{CurrentFontFamily}}%
+	%\SetVar{FONT::#1Color}{Black}%
+}%
+
+%% sets font params of size 10pt under name #1, defined by latter params
+%% you do not have to change the family, since the font name is given as filename, params:
+% 1 - the alias for the set font params
+% 2 - font file name
+% 3 - font size: at size, scaled\magstep1
+\def\MkFontTenAliasRaw#1#2#3{%
+	\ex\font\csname FONT::Regular#1\endcsname=#2\space#3%
+	\ex\font\csname FONT::Italic#1\endcsname=#2\space#3%
+	\ex\font\csname FONT::Slanted#1\endcsname=#2\space#3%
+	\ex\font\csname FONT::TerminalType#1\endcsname=#2\space#3%
+	\ex\font\csname FONT::Bold#1\endcsname=#2\space#3%
+	\ex\font\csname FONT::BoldItalic#1\endcsname=#2\space#3%
+	\SetVar{FONT::#1DefaultStyle}{Regular}%
+	\SetVar{FONT::#1FontFamily}{custom#2}%
+}
+
+%% sets color for the given font, params:
+% 1 - font alias
+% 2 - color to be used
+\def\SetFontColor#1#2{\SetVar{FONT::#1Color}{#2}}%
+
+%% returns style of the font alias, params:
+% 1 - font alias (previously declared by MkFontTenAlias)
+% 2 - needed style (Italic, Regular,...)
+\def\SetFontStyle#1#2{%
+\IfSetVar{FONT::#1DefaultStyle}{% then
+	\csname FONT::#2#1\endcsname}%
+	{% else
+	\FatalErrMsg{font alias #1 has not been declared yet (see MkFontTenAlias)}%
+}}%
+
+	
+\def\GetAliasStyle#1{%
+	\TestVarExists{FONT::#1DefaultStyle}%
+	\GetVar{FONT::#1DefaultStyle}}
+
+%% perform only after selecting font using \SetFont, params:
+% 1 - style to switch to (Bold, Italic, Regular,...)
+\def\DummySwitchToShape#1{%
+	%\DPRINT{now dummy switching to #1}%
+	\csname FONT::#1\GetVar{CurrentFontName}\endcsname%
+	\lSetVar{CurrentFontStyle}{#1}%
+}%
+
+%% perform only after selecting font using \SetFont, params:
+% 1 - style to switch to (Bold, Regular, Italic,...)
+\def\SwitchToShape#1{%
+	\def\condition{\NO}%
+	\IfVar CurrentFontStyle='Italic'{\def\condition{\YES}}{}%
+	\IfVar CurrentFontStyle='Slanted'{\def\condition{\YES}}{}%
+	\IfYES '\condition'{%
+		\IfLit'#1'='Bold'{\DummySwitchToShape{BoldItalic}}{\DummySwitchToShape{#1}}%
+		}{% else: we are not in Italic nor Slanted
+		%\DPRINT{Now in else \#1 is #1, CurrentFontStyle=\GetVar{CurrentFontStyle}, condition=\condition}%
+		\IfVar CurrentFontStyle='Bold'{%
+			% we are in bold, do we want to switch to italic or slanted?
+			\IfLit '#1'='Italic'{\def\condition{\YES}}{}%
+			\IfLit '#1'='Slanted'{\def\condition{\YES}}{}%
+			\IfYES'\condition'{\DummySwitchToShape{BoldItalic}}{\DummySwitchToShape{#1}}%
+		}{\DummySwitchToShape{#1}}%
+	}%
+}%
+
+
+%% switch to italic, slanted or bold-italic style with optional italic
+%% correction included, the italic correction is optionally performed 
+%% after switching back to orignal style, params:
+% 1 - style in which to switch to
+% 2 - text to be typesetted in ISBi
+\long\def\SwitchToISBiWithItalicCorrection#1#2{{%
+	\let\postaction\relax
+	\def\ActivateCorrection{\def\postaction{\ifvmode\else\/\fi}}%
+	\IfVar CurrentFontStyle='Regular'\ActivateCorrection{}%
+	\IfVar CurrentFontStyle='Bold'\ActivateCorrection{}%
+	\IfVar CurrentFontStyle='TerminalType'\ActivateCorrection{}%
+	\SwitchToShape{#1}#2\postaction}}%
+
+%% switch to roman, bold or tt style with optional italic correction inclusion, 
+%% the italic correction is performed before switching to new style, params:
+% 1 - style in which to switch to
+\long\def\SwitchToRBTWithItalicCorrection#1#2{%
+	\let\preaction\relax
+	\def\ActivateCorrection{\def\preaction{\ifvmode\else\/\fi}}%
+	\IfLit '#1'='Regular'\ActivateCorrection{}%
+	\preaction{\SwitchToShape{#1}#2}}%
+
+
+%% more verbose style switches with optional italic correction, params:
+% text to be typesetted in italic
+\long\def\Italic#1{\SwitchToISBiWithItalicCorrection{Italic}{#1}}%
+\long\def\Slanted#1{\SwitchToISBiWithItalicCorrection{Slanted}{#1}}%
+\long\def\BoldItalic#1{\SwitchToISBiWithItalicCorrection{BoldItalic}{#1}}%
+\long\def\Bold#1{\SwitchToRBTWithItalicCorrection{Bold}{#1}}%
+\long\def\Regular#1{\SwitchToRBTWithItalicCorrection{Regular}{#1}}%
+\long\def\TerminalType#1{\SwitchToRBTWithItalicCorrection{TerminalType}{#1}}%
+
+%% creating LaTeX like font switches:
+%% textrm, textit, textbf, texttt, textsl, textbi
+%\def\CreateTextXXcs#1{\ex\def\csname text#1\endcsname##1{{\csname #1\endcsname##1}}}%
+
+%% sets font params under name #1, defined by latter params, params:
+% 1 - name of the alias for the set font params
+% 2 - font name (see GetCurrFontName, GetCurrFontStyleName)
+% 3 - font size: at size, scaled\magstep1
+%\def\MkFontName#1#2#3{\ex\font\csname FONT::#1\endcsname=#2\space#3}
+
+\def\SetApprFontColor{\IfSetVar{FONT::\GetVar{CurrentFontName}Color}{%
+\csname text\GetVar{FONT::\GetVar{CurrentFontName}Color}\endcsname}{}}%
+
+%% sets font under identifier #1 as currently active font, params:
+% 1 - font alias given to MkFontTenAlias
+\def\SetFont#1{%
+	\ex\let\ex\next\ex=\csname FONT::\GetAliasStyle{#1}#1\endcsname
+	\ifx\next\relax \message{cannot find font FONT::\GetAliasStyle{#1}#1}\fi
+	\next
+	\IfSetVar{CurrentFontName}{%
+	\def\next{\SetApprFontColor\aftergroup\SetApprFontColor}}{\let\next=\relax}%
+	\lSetVar{CurrentFontName}{#1}%
+	\lSetVar{CurrentFontStyle}{\GetAliasStyle{#1}}%
+	\next
+}%
+
+%% switches to a new font given in parameter, after switching to this font
+%% family, you may define font aliases using MkFontTenAlias, the basic variant
+%% of this font (Regular, 10pt - \tenrm) is automatically defined under alias
+%% 'FontFamily'Basic (e.g. for Palatino it is PalatinoBasic), params: 
+% 1 - font name: one of Palatino, Helvetica, Bookman,
+% NewCentury, Times, Avantgarde
+\def\SetFontFamily#1{%
+	\TestVarExists{FF::#1}%
+	\input \GetVar{FF::#1}%
+	\lSetVar{CurrentFontFamily}{#1}%
+	\MkFontTenAlias{#1Basic}{Regular}{}%
+	\SetFont{#1Basic}%
+}%
+
+%% now load the settings
+\LoadFile{font_settings.tex}

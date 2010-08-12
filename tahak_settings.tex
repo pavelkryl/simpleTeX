@@ -1,0 +1,67 @@
+\LoadPackage{tahak}
+
+\SetVar{ItemBullet}{$\bullet$}
+\SetVar{ItemItemBullet}{$\triangleright$}
+\SetVar{ItemItemItemBullet}{$\rightarrow$}
+\SetVar{HeaderContent}{This is content of variable HeaderContent}
+\SetVar{TerminusSeparator}{~--}
+\SetVar{FigMag}{.7}
+
+
+%% setting style and font params
+\SetStyleParam{Heading1}[ExtraBottomSpace]={1em}
+\SetStyleParam{Heading1}[Alignment]={center}
+\SetStyleParam{Heading1}[ExtraTopSpace]={1em}
+\SetStyleParam{Heading1}[SuppresNextParIndent]={NO}
+
+\SetStyleParam{Heading2}[ExtraBottomSpace]={.5em}
+\SetStyleParam{Heading2}[ExtraTopSpace]={.4em}
+\SetStyleParam{Heading2}[PreActions]={\removelastskip}
+\SetStyleParam{Heading2}[SuppresNextParIndent]={NO}
+
+\SetStyleParam{Heading3}[Prefix]={\hskip1em}
+\SetStyleParam{Heading3}[ExtraTopSpace]={.2em}
+\SetStyleParam{Heading3}[ExtraBottomSpace]={.2em}
+\SetStyleParam{Heading3}[SuppresNextParIndent]={NO}
+\SetFontColor{ShortVerbatimFont}{Sepia}
+
+%% environment params - verbatim
+\SetEnviParam{Verbatim}[PostActions]={%
+	\EnlargeBox0{0pt}{3pt}{0pt}{3pt}%
+	\FillBoxBGColor0{0 0 0 .2}\noindent\PrintBox0}%
+\SetEnviParam{Verbatim}[InterLineSkip]={0pt}
+\SetEnviParam{Verbatim}[ExtraLeftMargin]={5pt}
+
+%% figure
+\SetEnviParam Figure[Floating]={NO}
+\SetEnviParam Figure[ExtraTopSpace]={0pt}
+
+%% numbered list
+\SetEnviParam List123[ItemSpacing]={\GetDocParam[ParSpacing]}
+\SetEnviParam List123[ExtraLeftMargin]={20pt}
+
+%% tables
+\SetEnviParam Table[PostActions]={\egroup\egroup%
+	\EnlargeBox0{0pt}{0pt}{0pt}{4pt}%
+	\FillBoxBGColor0{0 0 0 0.1}%
+	\UOverruleBox0{.6pt}\LayoutBox0{\GetCurrEnviParam[Alignment]}}
+
+%% setting DOC params
+\SetDocParam[Magnification]={700}
+\SetDocParam[PageOrientation]={landscape}
+\SetDocParam[ColumnsTotal]={4}%
+\SetDocParam[ColumnSpacing]={20pt}%
+\SetDocParam[InterColumnLineWidth]={.4pt}%
+\SetDocParam[TextHeight]={18.1truecm}
+\SetDocParam[TextWidth]={28truecm}
+\SetDocParam[PageTopMargin]={1.5truecm}
+\SetDocParam[PageLeftMargin]={.8truecm}
+\SetDocParam[Alignment]={left}
+\SetDocParam[ParSpacing]={3pt}
+\SetDocParam[FirstLineIndent]={11pt}
+\SetDocParam[Header]={%
+	\vbox{%
+		\hbox to\hsize{\hfill\SetFont{Heading3Font}\GetVar{HeaderContent}\hfill}%
+		\kern2pt%
+		\Gray{\hrule width\hsize depth2pt}%
+}}%

@@ -1,0 +1,209 @@
+\LoadPackage{envis}
+\LoadPackage{counters}
+\LoadPackage{util}
+%% here are common useful environments
+
+\CreateNewEnvironment{Cite}{%
+	\advance\leftskip by\GetCurrEnviParam[ExtraLeftMargin]%
+	\advance\rightskip by\GetCurrEnviParam[ExtraRightMargin]%
+	\SetAlignment{\GetCurrEnviParam[Alignment]}%
+	\SwitchToShape{\GetCurrEnviParam[FontStyle]}%
+	}{}%
+
+\SetEnviParam{Cite}[ExtraLeftMargin]={2em}%
+\SetEnviParam{Cite}[ExtraRightMargin]={2em}%
+\SetEnviParam{Cite}[Alignment]={block}%
+\SetEnviParam{Cite}[FontStyle]={Italic}%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% verbatim environment
+%% helper macros:
+{\obeyspaces \gdef\activespace{\obeyspaces\let =\ }}
+\def\setverb{\def\do##1{\catcode`##1=12}\dospecials}
+{\obeylines \catcode`\|=0 \catcode`\<=1 \catcode`\>=2 \catcode`\{=12 \catcode`\}=12 \catcode`\\=12
+  |gdef|startverb#1^^M#2\End{Verbatim}<%#2|egroup>>%
+		%|SetFont<|GetCurrEnviParam<Font>>#2|egroup|GetCurrEnviParam<PostActions>>>%
+		|SetFont<|GetCurrEnviParam[Font]>#2|egroup|End<Verbatim>>>%
+
+% gather the read verbatim text into box0 (hbox)
+\CreateNewEnvironment{Verbatim}{%
+	\par
+	\global\setbox0=\vbox\bgroup
+	\parindent=\GetCurrEnviParam[ExtraLeftMargin]%
+	\parskip=\GetCurrEnviParam[InterLineSkip]%
+	\setverb\catcode`\=12\catcode`"=12\activespace
+	\def\par{\leavevmode\strut\endgraf}%
+	\obeylines \startverb}%
+	{\noindent\box0}%
+ 
+% params of environment
+\SetEnviParam{Verbatim}[Font]={VerbatimFont}%
+\SetEnviParam{Verbatim}[ExtraLeftMargin]={1em}%
+\SetEnviParam{Verbatim}[InterLineSkip]={0pt}%
+
+% short verbatim environment of strings enclosed in quotes
+\def\"{"} \catcode`\"=13%
+\def"{\leavevmode\hbox\bgroup\let"=\egroup\setverb\obeyspaces\SetFont{ShortVerbatimFont}}%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% possibly floating environment
+
+\CreateNewEnvironment{VarFloating}{%
+	\IfLit '\GetCurrEnviParam[Floating]'='YES'%
+		% then
+		{\IfLit '\GetCurrEnviParam[FloatingType]'='in place'{\midinsert}%
+			% else
+			{\IfLit '\GetCurrEnviParam[FloatingType]'='top'{\topinsert}{\pageinsert}}%
+		}%
+		% else
+		{\vbox\bgroup}%
+}{%
+	\IfLit '\GetCurrEnviParam[Floating]'='YES'%
+		% then
+		{\endinsert}%
+		% else
+		{\egroup}%
+}
+
+%% settings
+\SetEnviParam VarFloating[ExtraTopSpace]={0pt}
+\SetEnviParam VarFloating[Floating]={YES}
+\SetEnviParam VarFloating[FloatingType]={in place} % other: top, page
+\SetEnviParam VarFloating[ExtraTopLines]={0}
+\SetEnviParam VarFloating[ExtraBottomLines]={0}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% necessary items
+
+%% special bulleted item, which has parametrised bullet sign
+\def\ParedItem#1{\par\indent\llap{#1\kern\GetCurrEnviParam[ItemTextSpace]}\ignorespaces}
+
+%% bullet item used in plain lists
+\def\BulletItem{\ParedItem{\GetCurrEnviParam[BulletSign]}}%
+
+%% item used in numbered lists (roman as well as arabic or alphabetic numbers)
+\def\NumItem{%
+	\IncrementCounter{\GetCurrEnviParam[Counter]}%
+	\par\indent\llap{\GetCurrEnviParam[NumberProcessor]{\GetCounter{\GetCurrEnviParam[Counter]}}%
+	\GetCurrEnviParam[Separator]\kern\GetCurrEnviParam[ItemTextSpace]}\ignorespaces}%
+
+%% starts a paragraph which is #1 units exceeded to the left,
+% the following paragraphs are intended as usual, params:
+% 1 - left excess
+\def\ExcsdPar#1{%
+	\advance\parindent by-#1%
+	\par%
+	\def\par{\endgraf%
+		\advance\parindent by#1%
+		\let\par\endgraf}}%
+
+%% description item used in description lists
+\def\DescItem#1{\ExcsdPar{\GetCurrEnviParam[ItemExcess]}\Bold{#1}\GetCurrEnviParam[Separator]\ignorespaces}%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% common item list
+%%
+\CreateNewEnvironment{CommonItemEnvironment}{%
+	\advance\leftskip by\GetCurrEnviParam[ExtraLeftMargin]%
+	\everypar={\parskip=\GetCurrEnviParam[ItemSpacing]\everypar={}}%
+	\GetEnviParamInToks0\GetCurrEnviName[Item]%
+	\ex\let\ex\Item\the\toks0}%
+	{}% POST
+
+%% params
+\SetEnviParam{CommonItemEnvironment}[ExtraLeftMargin]={4em}%
+\SetEnviParam{CommonItemEnvironment}[ItemSpacing]={\GetDocParam[HardLineSkip]}%
+\SetEnviParam{CommonItemEnvironment}[ItemTextSpace]={.5em}%
+\SetEnviParam{CommonItemEnvironment}[Item]={}%
+% in case of radkovy rejstrik
+\SetEnviParam{CommonItemEnvironment}[ExtraTopLines]={1}%
+\SetEnviParam{CommonItemEnvironment}[ExtraBottomLines]={1}%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% description List
+%%
+\DeriveNewEnvironment{CommonItemEnvironment}->{DescriptionList}%
+
+%\CreateNewEnvironment{DescriptionList}{% PRE
+%	\def\Item##1{\DescItem{##1}\parskip=\GetCurrEnviParam[ItemSpacing]\let\Item=\DescItem\ignorespaces}%
+%	\advance\leftskip by\GetCurrEnviParam[ExtraLeftMargin]%
+%	\parindent=-\GetCurrEnviParam[ItemExcess]}{%POST
+%	\par}%
+
+%% params
+\SetEnviParam{DescriptionList}[Item]={\DescItem}
+\SetEnviParam{DescriptionList}[ItemExcess]={1cm}%
+\SetEnviParam{DescriptionList}[Separator]={ -- }%
+%\PostfixEnviParam{DescriptionList}[PreActions]<{}%\advance\parindent by-\GetCurrEnviParam[ItemExcess]}%
+%\everypar={\advance\parindent by\GetCurrEnviParam[ItemExcess]}%
+%}%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% simple List
+%% Simple item list, the items are indented by environment parameter 'BulletSign'
+%% the whole item list is intended from left side using 'ExtraLeftMargin' envi param
+\DeriveNewEnvironment{CommonItemEnvironment}->{List}%
+
+%% params
+\SetEnviParam{List}[Item]={\BulletItem}%
+\SetEnviParam{List}[ExtraLeftMargin]={4em}%
+\SetEnviParam{List}[BulletSign]={$\triangleright$}%
+\SetEnviParam{List}[ItemTextSpace]={.5em}%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% List itemized by params of \Item macros
+%%
+\DeriveNewEnvironment{List}->{SpecialItemedList}%
+
+%% params
+\SetEnviParam{SpecialItemedList}[Item]={\ParedItem}%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NumberedList
+%% Numbered list, it can be nested, numbers are remembered
+%% in each list the envi param Counter is defined which contains
+%% the name of the recently used item counter
+%% use \GetCounter{\GetCurrEnviParam[Counter]} to retrieve the value
+%%
+%% another envi param NestingCounter contains the name of counter counting
+%% the level of NumberedList nesting
+\DeriveNewEnvironment{CommonItemEnvironment}->{List123}%
+
+%% params
+\PostfixEnviParam{List123}[PreActions]<{%
+	\IncrementCounter{\GetCurrEnviParam[NestingCounter]}%
+	\DeclareCounter{EnumCounter\GetCounter{\GetCurrEnviParam[NestingCounter]}}%
+	\SetCurrEnviParam{Counter}{EnumCounter\GetCounter{\GetCurrEnviParam[NestingCounter]}}%
+	\SetCounter{\GetCurrEnviParam[Counter]}{\GetCurrEnviParam[InitNumberValue]}%
+	\AddToCounter{\GetCurrEnviParam[Counter]}{-1}%
+}
+
+\PostfixEnviParam{List123}[PostActions]<{% POST actions
+	\DecrementCounter{\GetCurrEnviParam[NestingCounter]}}
+
+\def\SimpleNP#1{#1}%
+%% params of NumberedList environment
+\SetEnviParam{List123}[InitNumberValue]={1}%
+\DeclareCounter{EnumNestingCounter}%
+\SetEnviParam{List123}[NestingCounter]={EnumNestingCounter}%
+\SetEnviParam{List123}[NumberProcessor]={\SimpleNP}%
+\SetEnviParam{List123}[Separator]={.}%
+\SetEnviParam{List123}[ItemTextSpace]={.5em}%
+\SetEnviParam{List123}[CurrentItemNo]={\GetCurrEnviParam[NumberProcessor]\GetCounter{\GetCurrEnviParam[Counter]}}%
+\SetEnviParam{List123}[Item]={\NumItem}%
+
+%% list numbered with roman numbers
+\DeriveNewEnvironment{List123}->{Listiii}%
+\SetEnviParam{Listiii}[NumberProcessor]={\ToRoman}%
+
+%% list numbered with roman numbers
+\DeriveNewEnvironment{List123}->{ListIII}%
+\SetEnviParam{ListIII}[NumberProcessor]={\ToRomanUpper}%
+
+%% list numbered with small letters
+\DeriveNewEnvironment{List123}->{Listabc}%
+\SetEnviParam{Listabc}[InitNumberValue]={97}%
+\SetEnviParam{Listabc}[NumberProcessor]={\ToChar}%
+\SetEnviParam{Listabc}[Separator]={)}%
+
+%% list numbered with capital letters
+\DeriveNewEnvironment{Listabc}->{ListABC}%
+\SetEnviParam{ListABC}[InitNumberValue]={65}%
+\SetEnviParam{ListABC}[NumberProcessor]={\ToChar}%

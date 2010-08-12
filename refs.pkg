@@ -1,0 +1,105 @@
+%% references in a document
+
+%% file representing ref file (OUT)
+\newwrite\RefFile
+\SetVar{refs::RefFilename}{\jobname.refs}
+
+%% defines intermediate reference which helps by final page layout
+% if the reference does not exist yet warning message is printed out
+% if it already exists nothing is done
+% params:
+% 1 - reference id
+% 2 - reference body
+\def\SetIntermRef#1#2{%
+	%\message{setting interm ref #1 as #2}%
+	\IfSetVar{refs::Ref:#1}{}{% then, else:
+		\message{CBTeX warning: references may be unstable!}%
+		\eSetVar{refs::Ref:#1}{#2}}%
+}
+
+%% defines new reference, this command is used in ref file,
+% reference #1 is defined as non-expanded #2, if reference with name #1
+% is already defined, warning is printed, params:
+% 1 - reference name (id)
+% 2 - reference body
+\def\SetRef#1#2{%
+	\IfSetVar{refs::Ref:#1}{\message{Warning: reference #1 defined more than once!}}{}%
+	%\message{setting reference #1 as #2 uncond}%
+	\SetVar{refs::Ref:#1}{#2}%
+}
+
+%% returns body of reference, params:
+% 1 - reference name (id)
+\def\GetRef#1{\IfSetVar{refs::Ref:#1}%
+		{\GetVar{refs::Ref:#1}}% then
+		{\message{Warning: reference #1 doesn't exist}\Red{!unknown target!}}% else
+}
+
+%% defines new reference with body expanded at shipout time, params:
+% 1 - reference name (id)
+% 2 - reference body
+\def\SetShipoutRef#1#2{%
+	\write\RefFile{\string\SetRef{#1}{#2}}%
+	\SetIntermRef{#1}{#2}%
+}
+
+%% defines new reference with body expanded right in the place
+% of usage, params:
+% 1 - reference name (id)
+% 2 - reference body
+\def\SetImmRef#1#2{{%
+	\immediate\write\RefFile{\string\SetRef{#1}{#2}}%
+	\SetIntermRef{#1}{#2}%
+}}
+
+%% defines new reference with non-expanded body, params:
+% 1 - reference name (id)
+% 2 - reference body
+\def\SetNoExRef#1#2{%
+	\toks0={#2}%
+	% zapis do souboru
+	\immediate\write\RefFile{\string\SetRef{#1}{\the\toks0}}%
+	\SetIntermRef{#1}{#2}%
+}
+
+\SoftInput{\GetVar{refs::RefFilename}} 		% nacteni souboru odkazu
+\immediate\openout\RefFile=\GetVar{refs::RefFilename}	% otevreni souboru odkazu pro zapis
+
+%% creates couple of references (page and number) related to document entity,
+% params:
+% 1 - unique reference ID (totally expanded in place)
+% 2 - number of the entity (number of heading, figure, table,...)
+\def\SetDocEntityRefs#1#2{{%
+	\edef\argA{#1}%
+	\ex\SetShipoutRef\ex{\argA:page}{\the\pageno}%
+	%\message{refing doc entity #1 number: #2}%
+	\ex\SetImmRef\ex{\argA:number}{#2}}}%
+
+%% returns document entity reference, params:
+% 1 - reference name (unique ID given to SetDocEntityRefs)
+% 2 - kind of reference we are interested in: page|number
+\def\GetDocEntityRef#1#2{\GetRef{#1:#2}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% anchors %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% anchors are named invisible elements placed in text, on which
+% references may exist, to make references to doc elements I recommend
+% you to use \SetDocEntityRefs
+
+%% defines new anchor, which body is expanded immediately
+% and completely, you may ask for anchor's: label and page, params:
+% 1 - anchor name (ID)
+% 2 - anchor body (label)
+\def\ImmAnchor#1#2{\SetImmRef{Anchor::label::#1}{#2}%
+	\SetShipoutRef{Anchor::page::#1}{\the\pageno}}
+
+%% defines new anchor, with body expanded in place of anchor's
+% usage (in place of anchor's reference), params:
+% 1 - anchor name (ID)
+% 2 - anchor body (not expanded)
+\def\Anchor#1#2{\SetNoExRef{Anchor::label::#1}{#2}%
+	\SetShipoutRef{Anchor::page::#1}{\the\pageno}}
+
+%% returns desired attribute of an anchor, params:
+% 1 - ID of the anchor
+% 2 - anchor attribute: label|page
+\def\GetAnchor#1#2{\GetRef{Anchor::#2::#1}}

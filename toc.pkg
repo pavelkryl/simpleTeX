@@ -1,0 +1,125 @@
+
+%%%%% Makra pro podporu obsahu - TOC %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\TOCfilename{\jobname.toc}
+\newwrite\TOCfile
+
+%% nastavuje prostredi pro sazbu obsahu
+% za timto prikazem mohou nasledovat prikazy
+% pro vysazeni radku obsahu (\TOCline)
+%\def\BTOCenv{\bgroup\parskip=\baselineskip}
+%% ukoncuje prostredi obsahu
+%\def\ETOCenv{\egroup}
+
+%% jedna radka obsahu
+% 1 - akce provedene pred vytistenim radku (napr nastaveni tucneho rezu)
+% 	vysazeni celeho radku je provedeno ve skupine!
+% 2 - material vytisteny vlevo
+% 3 - vyplnujici material
+% 4 - material vytisteny vpravo
+% 5 - mezera pod radkem obsahu
+\def\TOCline#1#2#3#4#5{%
+	{\line{#1#2\leaders#3\hfil\ #4}}%
+	\nobreak
+	\vskip#5%
+}
+
+\newtoks\pgtoks
+\newtoks\lbltoks
+\pgtoks={\the\pageno}
+\def\emdot{\hbox to 1em{\hfil.\hfil}}
+
+%% jedna radka obsahu sazejici nadpis urovne A
+% 1 - cislo kapitoly
+% 2 - samotny nadpis
+% 3 - strana
+\def\TOClineA#1#2#3{%
+	\def\tmpa{#2}%
+	\ifx\TAnumbering\Yes
+		\def\tmpa{#1.\enskip#2}%
+	\fi
+	\penalty-100%
+	\TOCline{\mystrut{20pt}\bf}{\tmpa}{\hbox to1em{}}{#3}{8pt}%
+}
+
+%% jedna radka obsahu sazejici nadpis urovne B
+% 1 - cislo kapitoly
+% 2 - samotny nadpis
+% 3 - strana
+\def\TOClineB#1#2#3{%
+	\def\tmp{#2}%
+	\ifx\TBnumbering\Yes
+		\def\tmp{#1\quad#2}%
+	\fi
+	\TOCline{\mystrut{15pt}\quad}{\tmp}\emdot{#3}{5pt}%
+}
+
+%% jedna radka obsahu sazejici nadpis urovne C
+% 1 - cislo kapitoly
+% 2 - samotny nadpis
+% 3 - strana
+\def\TOClineC#1#2#3{
+	\def\tmp{#2}%
+	\ifx\TBnumbering\Yes
+		\def\tmp{#1\quad#2}%
+	\fi
+	\TOCline{\qquad}{\tmp}\emdot{#3}{1pt}%
+}
+
+%% writes one line into TOC file
+% 1 - macro to be written to the .toc file
+% 2 - number of the title (will be expanded)
+% 3 - title itself (will _not_ be expanded)
+% page is obtained automatically
+% the line in the toc file with this initial conditions:
+% #1 - \TOClineA (no additional constructs allowed)
+% #2 - \the\MyNumA.\the\MyNumB with values 3 and 4 respectively
+% #3 - About love and~hate
+% if it appears on the page 5, results in:
+% \TOClineA{3.4}{About love and~hate}{5}
+\def\TOCwrite#1#2#3{%
+	\lbltoks={#3}{%
+		\edef\tmpi{\write\TOCfile{\noexpand\string\noexpand#1{#2}{\the\lbltoks}{\the\pgtoks}}}%
+		\tmpi\nobreak
+		%!!! I dont't know how to handle \nobreak, \immediate would do the job but is bad for other things
+	}%
+}
+
+%% making synonyms to be used in the body of TOCifyStyle
+\let\TOCTitleA=\TOClineA
+\let\TOCTitleB=\TOClineB
+\let\TOCTitleC=\TOClineC
+
+%% internal macros
+% 1 - ignored token, it is used on character sequences
+% produced by \string, hence it removes the leading '\'
+% and replaces it by string 'TOC'
+\def\MkTOClbl#1{TOC}
+
+
+%% changes the definition of !macro! #1 with parameter mask "#1\par"
+% by adding to its current body #2
+\def\AddToDef#1#2{%
+	% assigning to newtoks
+	%\ex\toks0\ex{#1##1\par}
+	%\toks1={#2}
+	%\xdef#1##1\par{\the\toks0\the\toks1}
+	\ex\def\ex#1\ex##\ex1\ex\par\ex{#1##1\par#2}%
+}
+
+%% predane styly doplni o vypis do obsahu
+% predpoklada masku parametru stylu "#1\par"
+% vola dokola TOCifyStyle ovsem s prazdnym druhym parametrem
+% seznam stylu musi byt ukoncen ridici sekvecni \relax
+% 1 - style to be TOCified
+% 2 - numbers written along with the text
+% 3 - next style or \relax if finished
+\def\TOCifyStyles#1#2#3{%
+	\ifx#3\relax \let\next=\relax % nothing to be done
+	\else \let\next=\TOCifyStyles
+	\fi
+	% zum jeden fall...
+	\TOCifyStyle#1{#2}%
+	\next#3%
+}
+

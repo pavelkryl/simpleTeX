@@ -1,0 +1,76 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%% biblicke knihy %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\LoadPackage{util}
+
+\def\SetBiblickaKnihaAbbr#1#2{\SetVar{Bible::Kniha::#1}{#2}}
+\def\GetBiblickaKnihaAbbr#1{\GetVar{Bible::Kniha::#1}}
+%% seznam knih a zkratek nasleduje
+{% definuj alias lokalne
+\let\sbka=\SetBiblickaKnihaAbbr
+\sbka{Gn}{1.~Moj¾í¹ova}
+\sbka{Ex}{2.~Moj¾í¹ova}
+\sbka{Lv}{3.~Moj¾í¹ova}
+\sbka{Nu}{4.~Moj¾í¹ova}
+\sbka{Dt}{5.~Moj¾í¹ova}
+\sbka{Joz}{Jozue}
+\sbka{Sd}{Soudcù}
+\sbka{Rt}{Rút}
+\sbka{1 S}{1.~Samuelova}
+\sbka{2 S}{2.~Samuelova}
+\sbka{1 Kr}{1.~Královská}
+\sbka{2 Kr}{2.~Královská}
+\sbka{1 Pa}{1.~Paralipomenon}
+\sbka{2 Pa}{2.~Paralipomenon}
+\sbka{Ezd}{Ezdrá¹}
+\sbka{Neh}{Nehemjá¹}
+\sbka{Est}{Ester}
+\sbka{Jb}{Jób}
+\sbka{®}{®alm}
+\sbka{Pø}{Pøísloví}
+\sbka{Kaz}{Kazatel}
+\sbka{Pís}{Píseò písní}
+\sbka{Iz}{Izajá¹}
+\sbka{Jr}{Jeremjá¹}
+\sbka{Pl}{Pláè}
+\sbka{Ez}{Ezechiel}
+\sbka{Da}{Daniel}
+\sbka{Oz}{Ozeá¹}
+\sbka{Jl}{Jóel}
+\sbka{Am}{Ámos}
+\sbka{Abd}{Abdiá¹}
+\sbka{Jon}{Joná¹}
+\sbka{Mi}{Micheá¹}
+\sbka{Na}{Nahum}
+\sbka{Abk}{Abakuk}
+\sbka{Sf}{Sofonjá¹}
+\sbka{Ag}{Ageus}
+\sbka{Za}{Zacharjá¹}
+\sbka{Mal}{Malachiá¹}
+\sbka{Sírachovec}{Sírachovec}
+\sbka{Mt}{Matou¹}
+\sbka{Mk}{Marek}
+\sbka{L}{Luká¹}
+\sbka{J}{Jan}
+\sbka{Sk}{Skut\-ky}
+\sbka{Ø}{Øímanùm}
+\sbka{1 K}{1.~Korintským}
+\sbka{2 K}{2.~Korintským}
+\sbka{Ga}{Galatským}
+\sbka{Ef}{Efezským}
+\sbka{F}{Filipským}
+\sbka{Ko}{Koloským}
+\sbka{1 Te}{1.~Tesalonickým}
+\sbka{2 Te}{2.~Tesalonickým}
+\sbka{1 Tm}{1.~Timoteovi}
+\sbka{2 Tm}{2.~Timoteovi}
+\sbka{Tt}{Titovi}
+\sbka{Fm}{Filemonovi}
+\sbka{®d}{®idùm}
+\sbka{Jk}{Jakub}
+\sbka{1 P}{1.~Petrova}
+\sbka{2 P}{2.~Petrova}
+\sbka{1 J}{1.~Janova}
+\sbka{2 J}{2.~Janova}
+\sbka{3 J}{3.~Janova}
+\sbka{Ju}{List Judùv}
+\sbka{Zj}{Zjevení}
+}

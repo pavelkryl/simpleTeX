@@ -1,0 +1,251 @@
+% z basemacros prevzit: styly, prostredi, promenne, zahlavi + zapati, barvy, krizove odkazy,
+% obrazky, obsah
+% ^- dat do baliku
+
+\let\ex\expandafter
+\def\YES{YES}%
+\def\NO{NO}%
+\let\DPRINT\message
+% disabling debug messages
+\def\DPRINT#1{}%
+\def\FatalErrMsg#1{\errmessage{#1}}%
+
+\ex\newtoks\csname @hlp::TmpToks@\endcsname
+\def\TmpToksCS{\csname @hlp::TmpToks@\endcsname}%
+
+\def\NewLine{\hfill\break}%
+\def\NewPage{\vfill\eject}%
+\def\\{\NewLine}
+
+%% variable manipulation
+
+{\catcode`\@=12%
+\gdef\VarPrefix{@var@:}%
+%% sets the value of variable #1 to value #2
+% 1 - variable name
+% 2 - variable value
+\long\gdef\SetVar#1#2{\ex\gdef\csname\VarPrefix#1\endcsname{#2}}%
+%% sets variable locally - after closing the group variable converts to it's
+%% original value, params:
+% 1 - variable name
+% 2 - variable value
+\gdef\lSetVar#1#2{\ex\def\csname\VarPrefix#1\endcsname{#2}}%
+%% sets variable #1 to expanded value of #2, params:
+% 1 - variable name
+% 2 - variable value: text to be expanded before assignment
+\gdef\eSetVar#1#2{\ex\xdef\csname\VarPrefix#1\endcsname{#2}}%
+%% content of source variable is directly copied (no expansion) to destination,
+%% this is something else then: \SetVar{Destination}{\GetVar{Source}} because if
+%% the source is changed later, then Destination is also affected - this is not
+%% this case, params:
+% 1 - source variable name
+% 2 - destination variable name
+\gdef\CopyVar#1->#2{%
+	\ex\ex\ex\TmpToksCS\ex\ex\ex=\ex\ex\ex{\csname\VarPrefix#1\endcsname}%
+	\eSetVar{#2}{\the\TmpToksCS}%
+}%
+
+%% tests whether the given variable has been set to, params:
+% 1 - name of the variable
+% 2 - true text (then)
+% 3 - false text (else)
+\gdef\IfSetVar#1#2#3{%
+\ex\ifx\csname\VarPrefix#1\endcsname\relax
+#3\else
+#2\fi}%
+
+%% returns the value of previously set variable
+% 1 - variable ?of which value? we are interested in
+\gdef\GetVar#1{\csname\VarPrefix#1\endcsname}}%
+
+%% tests whether given variable exists, if it does not, error message is printed
+% out an input is awaited, BE CAREFUL, when the variable is set to \relax, it
+% behaves as undefined variable, params:
+% 1 - variable name
+\gdef\TestVarExists#1{\ex\ifx\csname \VarPrefix#1\endcsname\relax\FatalErrMsg{variable #1 does not exist!}\fi}
+
+%% appends content to an already existing content
+%% the existing content is verbatim copied - no expansion is performed, params:
+% 1 - name of the variable to which append
+% 2 - what to append
+\gdef\PostfixVar#1#2{%
+	\ex\ex\ex\toks0\ex\ex\ex{\csname\VarPrefix#1\endcsname}%
+	\toks1={#2}%
+	%\message{contents of toks0 is \the\toks0}%
+	%\message{contents of toks1 is \the\toks1}%
+	\eSetVar{#1}{\the\toks0 \the\toks1}%
+}%
+
+\gdef\PrefixVar#1#2{%
+	\ex\ex\ex\toks0\ex\ex\ex=\ex\ex\ex{\csname\VarPrefix#1\endcsname}%
+	\toks1={#2}%
+	\eSetVar{#1}{\the\toks1 \the\toks0}%
+}%
+
+%% tries to return values of variable, if the variable has not been defined
+%% yet, prints out an error message and terminates (fatal error), params:
+% 1 - variable name
+% 2 - error message in case 
+%\gdef\safeGetVar#1#2{\IfSetVar{#1}{\GetVar{#1}}{\FatalErrMsg{#2}}}%
+
+%% undefs given variable, params:
+% 1 - variable to be undefed
+\def\UndefVar#1{\ex\global\ex\let\csname\VarPrefix#1\endcsname=\undef}%
+
+%% returns content of variable in given 0-9 toks register
+\gdef\GetVarInToks#1#2{%
+	\ex\ex\ex\toks#1\ex\ex\ex=\ex\ex\ex{\csname\VarPrefix#2\endcsname}%
+}
+
+%% tests contents of variable
+% 1 - variable name
+% 2 - expected value
+% 3 - true text (then)
+% 4 - false text (else)
+\long\def\IfVar#1='#2'#3#4{{%
+	% local part
+	\edef\hlpA{\GetVar{#1}}%
+	\edef\hlpB{#2}%
+	\ifx\hlpA\hlpB\gdef\next{#3}\else\gdef\next{#4}\fi}%
+	% global part
+	\next
+}%
+
+%% compares numeric content of variables, params:
+% 1 - variable1
+% 2 - operator (<,>,=)
+% 3 - value
+% 4 - true text
+% 5 - false text
+\long\def\IfNumVar#1#2#3#4#5{\ex\ifnum\GetVar{#1}#2#3#4\else#5\fi}
+%\long\def\IfNumVar#1#2#3#4#5{\ex\ifnum\GetVar{#1}#2#3#4\else#5\fi}
+
+%% tests two strings
+% 1 - string 1
+% 2 - string 2
+% 3 - true text (then)
+% 4 - false text (else)
+\long\def\IfLit'#1'='#2'#3#4{{%
+	% local part
+	\edef\hlpA{#1}%
+	\edef\hlpB{#2}%
+	\ifx\hlpA\hlpB\gdef\next{#3}\else\gdef\next{#4}\fi}%
+	% global part
+	\next
+}%
+
+
+%% tests whether string #1 expands to YES string, params:
+% 1 - string to be expanded
+% 2 - then text
+% 3 - else text
+\long\def\IfYES'#1'#2#3{\IfLit'#1'='YES'{#2}{#3}}%
+
+%% conditionally includes text #2, depending whether any text with identifier
+%% #1 has been already included, params:
+% 1 - variable name containing #2 if the text in #3 should be included
+% 2 - variable value to be contained for inclusion
+% 3 - text to be included
+% note: you should rather use \IfVar macro
+\long\def\CondInclude#1#2#3{\IfVar#1='#2'{#3}%
+	% else
+	{\DPRINT{ommitting inclusion according to var #1=\GetVar{#1}}}}%
+
+%% includes specified text #2 only once depending on the variable #1, params:
+% 1 - variable on which the 'everlasting lock operation' is performed
+% 2 - text guarded by the variable
+\long\def\OneShotInclude#1#2{\IfVar#1='locked'{\DPRINT{ommiting file #1}}{\SetVar{#1}{locked}#2}}%
+
+%% includes given file only if it wasn't included before
+% 1 - name of the file to be included
+\long\def\SafeFileInclude#1{\OneShotInclude{#1}{\input #1\space}}%
+\def\LoadPackage#1{\SafeFileInclude{#1.pkg}}%
+
+%% includes given file into the current place in document
+\def\LoadFile#1{\input #1\space}%
+
+%% new input file representing softly included file
+\newread\SoftInputFile
+%% tries to open file for writing, if the file does not exists,
+% prints out a warning, if it succeeds, the file is just included, params:
+% 1 - file to be included
+\def\SoftInput#1{\let\next=\relax
+	\openin\SoftInputFile=#1 %
+	\ifeof\SoftInputFile\message{Warning: cannot open input file #1}%
+	\else\closein\SoftInputFile\def\next{\input #1 }\fi
+	\next
+}
+
+%% common useful macros manipulating mainly with macros again
+
+%% ignores first group (character) 
+\def\Ignore#1{}%
+%% removes from the given parameter the first inner group (character)
+\def\RemoveLeadingGroup#1{\Ignore#1}%
+
+%% saves text of macro #1 (one level expansion) into macro #2, params:
+% 1 - original macro name
+% 2 - new macro name which will do the same (direct macro name neccessary!!)
+\def\SaveMacro#1#2{\let#2=#1}%
+
+%% overwrites current body of parameterless macro #1 by body #2
+% 1 - name of the overwritten parameterless macro
+% 2 - new body
+\def\OverwriteNoParMacro#1#2{%
+	% saving original macro
+	\ex\SaveMacro\ex#1\ex{\csname @rIg\Ignore#1\endcsname}%
+	% redefining macro
+	\def#1{#2}%
+}%
+
+%% restores macro previously overwritten by OverwriteNoParMacro, params:
+% 1 - name of the previously overwritten macro
+\def\RestoreMacro#1{\ex\let\ex#1\ex=\csname @rIg\Ignore#1\endcsname}%
+%% returns body of the previously overwritten macro #1, params:
+% 1 - name of the macro
+\def\GetOrigMacro#1{\csname @rIg\Ignore#1\endcsname}%
+
+\newcount\hlpCount
+\newdimen\hlpDim
+%% a square, params:
+% 1 - size
+% 2 - space inserted under the box
+\def\Square[#1][#2]{\leavevmode\raise#2\hbox to#1{\vrule width#1 height#1 depth0pt}}%
+%\hlpDim=#1\advance\hlpDim by #2
+%   \vrule width #1 height\the\hlpDim depth -#2}
+
+%% LaTeX logo
+\def\LaTeX{L\kern-.36em\raise.5ex\hbox{\sevenrm A}\kern-.12em\TeX}
+
+\long\def\disable#1{}%
+
+%% conditionally perform #2 or #3 depending on following character, params:
+% 1 - expected following character
+% 2 - true text (character follows)
+% 3 - false text (no such character follows)
+\def\IfNextChar#1#2#3{%
+	\let\expectedNextChar=#1%
+	\def\trueText:{#2}\def\falseText:{#3}%
+	\futurelet\nextChar\NextCharHandlingRoutine
+}
+
+%% helper routine
+\def\NextCharHandlingRoutine{%
+	\ifx\nextChar\SpaceToken\let\next\RepeatIfNextChar
+	\else
+		\if\nextChar\expectedNextChar\let\next\trueText
+		\else\let\next\falseText
+		\fi
+	\fi\next:}%
+
+%% helper CS
+\futurelet\SpaceToken{ }
+%% helper routine
+\def\RepeatIfNextChar: {\futurelet\nextChar\NextCharHandlingRoutine}%
+
+\def\emptyCS{}
+%% cutting routine
+\def\GetDecimalPart[#1.#2]{\if a#2a \else \OmmitTrailingDot#2\fi}%
+\def\GetIntegerPart[#1.#2]{#1}
+
+\def\OmmitTrailingDot#1.{#1}

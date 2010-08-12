@@ -1,0 +1,366 @@
+\LoadPackage{styles}
+%% package helping to create contents of chapters, headings, figures, ...
+
+%% declares identifier for the new TOC, this kind of TOC
+% is supposed to be inserted before TOCified elements (e.g. real TOC
+% summarizing content of a book), this macro opens file with name #1.toc
+% rewriting the old content, so if you want to show the content of the file,
+% before it is rewritten, use \InsertPreTOC before \DeclarePreTOC, params:
+% 1 - TOC id (a file with the same name and suffix .toc is created)
+\def\DeclareTOC#1{{%
+	\def\hlpA{\csname newwrite\endcsname}%
+	\ex\hlpA\csname TOC::#1\endcsname
+	\SetVar{TOC::#1}{exists}%
+	\ex\immediate\ex\openout\csname TOC::#1\endcsname=#1.toc
+}}
+
+%% undefines TOC #1, after this action, the content may be printed
+% using \InsertTOC, after undefining you cannot add more lines into the TOC,
+% WARNING: make sure all writes are already performed (if you close buffered
+% file without unbuffering, the content in buffer is lost) this can be achieved
+% by performing \NewPage so all the TOC writes on the just typeset page are
+% really written, params:
+% 1 - TOC to be undefed
+\def\UndefTOC#1{%
+	\AssertTOCExists{#1}%
+	\UndefVar{TOC::#1}%
+	\ex\immediate\ex\closeout\csname TOC::#1\endcsname
+}
+
+\def\SetStyleTOCParam#1[#2]=#3{\SetStyleParam #1[TOC::#2]={#3}}
+\def\eSetStyleTOCParam#1[#2]=#3{\eSetStyleParam #1[TOC::#2]={#3}}
+\def\SoftSetStyleTOCParam#1[#2]=#3{\SoftSetStyleParam #1[TOC::#2]={#3}}
+\def\eSoftSetStyleTOCParam#1[#2]=#3{\eSoftSetStyleParam #1[TOC::#2]={#3}}
+\def\GetStyleTOCParam#1[#2]{\GetStyleParam #1[TOC::#2]}
+
+%% style TOC params are:
+% 1 - [PrefixWidth]
+% 2 - [FirstLineRightCut]
+% 3 - [MinFillWidth]
+% 4 - [Filler]
+
+%   1                  auto measured (\hsize)             3
+%|<--->|<------------------------------------------->|<------->|
+%   1               auto measured                 2       3
+%|<--->|<------------------------------------->|<--->|<------->|
+% 1.31. How to make a nice day ..............................58
+% 1.32. This is really long title for a regular
+%       in a heading like this, but it has got be such
+%       a long text because of demonstration purpose.........68
+
+
+%% tests whether given TOC has been declared, params:
+% 1 - toc id
+\def\AssertTOCExists#1{%
+	\IfSetVar {TOC::#1}{}{\FatalErrMsg{TOC #1 undeclared!}}}
+
+%\def\AssertTOCType#1#2{%
+%	\IfVar TOC::#1::type='#2'{}{\FatalErrMsg{TOC #1 incorrect type}}%
+%}
+
+%% variable detecting first overflow of modulo TOCToken counter
+\SetVar{contents::TOCToks::Overflew}{NO}
+
+%% handler detecting first overflow of counter, params:
+% 1 - name of the counter to detect
+\def\FirstOverflowDetect#1{%
+	\IfCounter #1='-1'{\SetVar{contents::TOCToks::Overflew}{YES}}{}%
+}
+
+%% sets maximum number of tocified elements on the page, if this
+% number is exceeded, some of the TOC lines will disappear while the
+% others will be doubled, params:
+% 1 - number of tocified elem on the page
+\def\SetMaxTOCElemsOnPage#1{{%
+	\DeclareModuloCounter{contents::TokRegModuloCounter}{#1}%
+	\def\tmpHandler{\FirstOverflowDetect{contents::TokRegModuloCounter}}%
+	\AddCounterHandler{contents::TokRegModuloCounter}\tmpHandler
+}}
+
+%% default value
+% TODO: change the value
+\SetMaxTOCElemsOnPage{10}%
+
+%% returns a string from which a CS describing current TOC tok reg is built
+\def\CurrTOCTokRegName{contents::tok\GetCounter{contents::TokRegModuloCounter}}
+
+%% checks whether a TOC tok register is available (declared),
+% if it is not, a new register is declared, (it uses current value of
+% variable contents::TOCToks::Overflew and current content of counter
+% contents::TokRegModuloCounter)
+\def\CheckCurrTOCTokRegAvailibility{%
+	\IfVar contents::TOCToks::Overflew='NO'%
+		% then
+		{{% declare new toks register
+			%\message{declaring toks register number \GetCounter{contents::TokRegModuloCounter}}%
+			\def\hlpCS{\csname newtoks\endcsname}%
+			\ex\hlpCS\csname\CurrTOCTokRegName\endcsname}}%
+		% else
+		{%
+			%\message{using toks register number \GetCounter{contents::TokRegModuloCounter}}%
+		}%
+}
+
+%% expands to command \AddTOCLine with arguments appropriately expanded, params:
+% 1 - TOC id
+% 2 - first arg for GeneralTOCLine - preactions (indentation, setting font shape,...) [nonexp]
+% 3 - 2.: number box width [exp]
+% 4 - 3.: number [exp]
+% 5 - 4.: first line cut [exp]
+% 6 - 5.: text (may contain invisible strut to enlarge the line) [nonexp]
+% 7 - 6.: minimal filler width [exp]
+% 8 - 7.: filler [nonexp]
+% 9 - 8.: page box width [exp]
+% note:
+% page number (7.) is completed automatically
+\def\GenerateAddNumberedTOCLine#1#2#3#4#5#6#7#8#9{{%
+	% building 2. argument for AddTOCLine
+	\def\argstr{\NumberedTOCLine{#2}}%
+	\ePostfixMacroBodyParent\argstr{#3}%
+	\ePostfixMacroBodyParent\argstr{#4}%
+	\ePostfixMacroBodyParent\argstr{#5}%
+	\PostfixMacroBodyParent\argstr{#6}%
+	\ePostfixMacroBodyParent\argstr{#7}
+	\PostfixMacroBodyParent\argstr{#8}%
+	\ePostfixMacroBodyParent\argstr{#9}%
+	% using the built argument
+	\ex\AddTOCLine\ex{\ex#1\ex}\ex{\argstr}% NumberedTOCLine...
+}}
+
+%% expands to command \AddTOCLine with arguments appropriately expanded, params:
+% 1 - TOC id
+% 2 - first arg for GeneralTOCLine - preactions (indentation, setting font shape,...) [nonexp]
+% 3 - 2.: prefix text box width [exp]
+% 4 - 3.: prefix text [exp]
+% 5 - 4.: first line cut [exp]
+% 6 - 5.: text (may contain invisible strut to enlarge the line) [nonexp]
+% 7 - 6.: minimal filler width [exp]
+% 8 - 7.: filler [nonexp]
+% 9 - 8.: page box width [exp]
+% note:
+% page number (7.) is completed automatically
+\def\GenerateAddTextPrefixedTOCLine#1#2#3#4#5#6#7#8#9{{%
+	% building 2. argument for AddTOCLine
+	\def\argstr{\TextPrefixedTOCLine{#2}}%
+	\ePostfixMacroBodyParent\argstr{#3}%
+	\ePostfixMacroBodyParent\argstr{#4}%
+	\ePostfixMacroBodyParent\argstr{#5}%
+	\PostfixMacroBodyParent\argstr{#6}%
+	\ePostfixMacroBodyParent\argstr{#7}
+	\PostfixMacroBodyParent\argstr{#8}%
+	\ePostfixMacroBodyParent\argstr{#9}%
+	% using the built argument
+	\ex\AddTOCLine\ex{\ex#1\ex}\ex{\argstr}% TextPrefixedTOCLine...
+}}
+
+%% makes the given style appear in the given (previously declared) TOC,
+% the toc-line \NumberedTOCLine is used to depict the line in TOC, params
+% 1 - name of the style to TOCify
+% 2 - declared TOC (TOC id) where to place the toc-lines
+% 3 - preactions before the whole line (may contain invisible strut to enlarge the line)
+% 4 - number to be used in TOC (prefix of the text, use \hfil if empty!)
+% 5 - actions before real TOC line (between the number and the text), takes text as an argument
+% 6 - code right after handled text (text of style)
+% 7 - page box width
+% right after performing this action you may need to customize these StyleTOCParams:
+% PrefixWidth: number box width
+% FirstLineRightCut
+% MinFillWidth
+\def\TOCifyStyleNumbered#1#2#3#4#5#6#7{{%
+	\ex\gdef\csname TOC::StyleHandler::#1\endcsname##1{%
+		\GenerateAddNumberedTOCLine{#2}{#3}%
+				{\GetStyleTOCParam #1[PrefixWidth]}{#4}%
+				{\GetStyleTOCParam #1[FirstLineRightCut]}{#5{##1}#6}%
+				{\GetStyleTOCParam #1[MinFillWidth]}%
+				{\GetStyleTOCParam #1[Filler]}%
+				{#7}%
+	}%
+%% TODO: explore this mysterious thing!!
+	\def\tmpF{\AddStylePostHandler{#1}}%
+	\ex\tmpF\csname TOC::StyleHandler::#1\endcsname
+	%should be the same as: \ex\AddStylePostHandler\ex{\ex#1\ex}\csname TOC::StyleHandler::#1\endcsname
+	%
+	%% these are default values for a style, change them if desired
+	\SoftSetStyleTOCParam #1[PrefixWidth]={20pt}%
+	\SoftSetStyleTOCParam #1[FirstLineRightCut]={0pt}%
+	\SoftSetStyleTOCParam #1[MinFillWidth]={3cm}%
+	\SoftSetStyleTOCParam #1[Filler]={\LineFiller}%
+}}
+
+%% makes the given style appear in the given (previously declared) TOC,
+% the toc-line \NumberedTOCLine is used to depict the line in TOC, params
+% 1 - name of the style to TOCify
+% 2 - declared TOC (TOC id) where to place the toc-lines
+% 3 - preactions before the whole line (may contain invisible strut to enlarge the line)
+% 4 - number to be used in TOC (prefix of the text, use \hfil if empty!)
+% 5 - actions before real TOC line (between the number and the text), takes text as an argument
+% 6 - code right after handled text (text of style)
+% 7 - page box width
+% right after performing this action you may need to customize these StyleTOCParams:
+% PrefixWidth: number box width
+% FirstLineRightCut: currently ignored
+% MinFillWidth
+\def\TOCifyStyleTextPrefixed#1#2#3#4#5#6#7{{%
+	\ex\gdef\csname TOC::StyleHandler::#1\endcsname##1{%
+		\GenerateAddTextPrefixedTOCLine{#2}{#3}%
+				{\GetStyleTOCParam #1[PrefixWidth]}{#4}%
+				{\GetStyleTOCParam #1[FirstLineRightCut]}{#5{##1}#6}%
+				{\GetStyleTOCParam #1[MinFillWidth]}%
+				{\GetStyleTOCParam #1[Filler]}%
+				{#7}%
+	}%
+%% TODO: explore this mysterious thing!!
+	\def\tmpF{\AddStylePostHandler{#1}}%
+	\ex\tmpF\csname TOC::StyleHandler::#1\endcsname
+	%should be the same as: \ex\AddStylePostHandler\ex{\ex#1\ex}\csname TOC::StyleHandler::#1\endcsname
+	%
+	%% these are default values for a style, change them if desired
+	\SoftSetStyleTOCParam #1[PrefixWidth]={20pt}%
+	\SoftSetStyleTOCParam #1[FirstLineRightCut]={0pt}%
+	\SoftSetStyleTOCParam #1[MinFillWidth]={3cm}%
+	\SoftSetStyleTOCParam #1[Filler]={\LineFiller}%
+}}
+
+%% makes the given style appear in the given (previously declared) TOC,
+% the toc-line \NumberedTOCLine is used to depict the line in TOC, params
+% 1 - name of the style to TOCify
+% 2 - declared TOC (TOC id) where to place the toc-lines
+% 3 - preactions before the whole line (may contain invisible strut to enlarge the line)
+% 4 - number to be used in TOC (prefix of the text, use \hfil if empty!)
+% 5 - actions before real TOC line (between the number and the text), takes text as an argument
+% 6 - code right after handled text (text of style)
+% 7 - page box width
+% right after performing this action you may need to customize these StyleTOCParams:
+% PrefixWidth: number box width
+% FirstLineRightCut
+% MinFillWidth
+\def\TOCifyStyle#1#2#3#4#5#6#7{{%
+	\ex\gdef\csname TOC::StyleHandler::#1\endcsname##1{%
+		\GenerateAddNumberedTOCLine{#2}{#3}%
+				{\GetStyleTOCParam #1[PrefixWidth]}{#4}%
+				{\GetStyleTOCParam #1[FirstLineRightCut]}{#5{##1}#6}%
+				{\GetStyleTOCParam #1[MinFillWidth]}%
+				{\GetStyleTOCParam #1[Filler]}%
+				{#7}%
+	}%
+%% TODO: explore this mysterious thing!!
+	\def\tmpF{\AddStylePostHandler{#1}}%
+	\ex\tmpF\csname TOC::StyleHandler::#1\endcsname
+	%should be the same as: \ex\AddStylePostHandler\ex{\ex#1\ex}\csname TOC::StyleHandler::#1\endcsname
+	%
+	%% these are default values for a style, change them if desired
+	\SoftSetStyleTOCParam #1[PrefixWidth]={20pt}%
+	\SoftSetStyleTOCParam #1[FirstLineRightCut]={0pt}%
+	\SoftSetStyleTOCParam #1[MinFillWidth]={3cm}%
+	\SoftSetStyleTOCParam #1[Filler]={\LineFiller}%
+}}
+
+%% adds new line (hbox) into TOC, params:
+% 1 - toc id
+% 2 - text to be written into the toc file (it is verbatim copied),
+%	it may be toc line macro with already expanded arguments except the last one
+%	- page number - it is completed automatically
+\def\AddTOCLine#1#2{{%
+	\AssertTOCExists{#1}%
+	\CheckCurrTOCTokRegAvailibility
+	\ex\global\csname \CurrTOCTokRegName\endcsname={#2}%
+	\edef\hlpF{\ex\write\csname TOC::#1\endcsname}%
+	\ex\hlpF\ex{\ex\the\csname \CurrTOCTokRegName\endcsname{\the\pageno}}%
+	\hIncrementCounter{contents::TokRegModuloCounter}%
+}}
+
+%% inserts pre-toc saved in file #1.toc (side effect when calling
+% DeclarePreTOC), if the file does not exist yet, warning message
+% is printed out and nothing happens, if #1 TOC is declared yet,
+% it is Undefed (closes the file for writing) and then the associated
+% file is written, TOC params:
+% 1 - id of the TOC to be included
+\def\InsertTOC#1{{%
+	\IfSetVar{TOC::#1}{\UndefTOC{#1}}{}%
+	\SoftInput{#1.toc}%
+}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%						Commands typesetting TOCs
+\def\dumpreg#1{\message{register \string#1 has value \the#1}}%
+
+\newdimen\contentsTextWidth
+%% typesets general TOC line as hbox
+% 1 - prefix width (often used for chapter number)
+% 2 - first line extra right margin (comparing to other lines if available)
+% 3 - minimal width of filler (between text and page number)
+% 4 - preactions 
+% 5 - content of prefix box (the content must fit exactly into width specified by @1)
+% 6 - text (shape of the paragraph is determined using the above values)
+% 7 - filler	
+% 8 - page number (may be a box)
+\def\GeneralTOCLine#1#2#3#4#5#6#7#8{%
+	\par
+	\hlpDim=\hsize
+	\advance\hlpDim by -#3\relax
+	%\advance\hlpDim by -#2\relax
+	\contentsTextWidth=\hlpDim
+	% now we have got width of the first line
+	\advance\contentsTextWidth by -#1\relax
+	%\advance\contentsTextWidth by #2\relax
+	% now we have got width of regular text
+	{\parfillskip=-#3%
+		\parindent=0pt%
+		\parshape=2 0pt \hlpDim #1 \contentsTextWidth\relax
+		#4\hbox to#1{#5}#6\leaders #7\hfil#8
+		\par%
+	}%
+}
+
+%% typesets general TOC line as hbox
+% 1 - text and commands on the left
+% 2 - filler (box or rule)
+% 3 - text on the right (page number)
+%\def\GeneralTOCLine#1#2#3{%
+%	\line{#1\leaders #2\hfil#3}%
+%}
+
+%% available builtin fillers
+\def\DotFiller{\hbox to1em{\hfil.\hfil}}
+\def\LineFiller{\hrule}
+\def\EmptyFiller{\hrule height0pt}
+
+%% TOC line with numbered element, the number is written in front
+% of the text, params:
+% 1 - preactions (indentation, setting font shape,...)
+% 2 - number box width
+% 3 - number
+% 4 - first line right cut
+% 5 - text (may contain invisible strut to enlarge the line)
+% 6 - minimal filler width
+% 7 - filler
+% 8 - page box width
+% 9 - page number
+\def\NumberedTOCLine#1#2#3#4#5#6#7#8#9{\GeneralTOCLine{#2}{#4}{#6}{#1}{\hfill#3\enskip}{#5}{#7}{\hbox to#8{\hfil#9}}}
+
+
+%% TOC line with element prefixed with a text, params:
+% 1 - preactions (indentation, setting font shape,...)
+% 2 - prefix text box width
+% 3 - prefix text (must fit exactly)
+% 4 - first line right cut (ignored)
+% 5 - text (may contain invisible strut to enlarge the line)
+% 6 - minimal filler width
+% 7 - filler
+% 8 - page box width
+% 9 - page number
+\def\TextPrefixedTOCLine#1#2#3#4#5#6#7#8#9{\GeneralTOCLine{#2}{#4}{#6}{#1}{#3}{#5}{#7}{\hbox to#8{\hfil#9}}}
+%{
+%	\setbox0=\vbox{\noindent#1#4}%
+%	\ifdim\wd0<.7\hsize
+%			\GeneralTOCLine{#1\hbox to#2{#3\hfill}\box0}{#5}{\hbox to#6{\hfil#7}}%
+%		\else
+%			\setbox0=\vtop{\hsize=.7\hsize\noindent\unvbox0}%
+%			\GeneralTOCLine{#1\hbox to#2{#3\hfill}\copy0}{#5}{\hbox to#6{\hfil#7}}%
+%	\fi
+%}
+
+%% creates invisible strut, params:
+% 1 - height
+% 2 - depth
+\def\MkInvisibleStrut#1#2{\hbox to0pt{\vrule height#1depth#2 width0pt}}

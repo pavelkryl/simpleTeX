@@ -1,0 +1,199 @@
+\LoadPackage{boxmanip}
+\LoadPackage{docenvi}
+% package helping to keep radkovy rejstrik
+
+% just flag
+\SetDocParam[RadkovyRejstrik]={YES}
+
+% bind the HardLineSkip to the correct register, BaseLineSkip is bounded too
+% the later Binding takes its place (the former is also performed but overwritten)
+\BindNameToReg{HardLineSkip}{\baselineskip}
+\DeclareRegBoundDocParam[HardLineSkip]{}
+
+\SetEnviParam Document[ExtraTopLines]={0}
+\SetEnviParam Document[ExtraBottomLines]={0}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% output routine customization
+\newtoks\RejstrikOutput
+\newdimen\hardlineskip
+\newdimen\rrhlpDimenA
+\newdimen\rrhlpDimenB
+\newcount\rrhlpCountA
+\newcount\rrhlpCountB
+\newbox\gridBox
+
+%\DebugOutput={% extending \vbox by gridbox
+\RejstrikOutput={% extending \vbox by gridbox
+	\setbox255=\vbox{\hbox to\hsize{\rlap{\Color{\GetDocParam[GridColor]}{\copy\gridBox}}\vbox to \ht255{\unvbox255\vss}}}%
+	\plainoutput}
+
+%\NormalOutput={% placing vbox the same way as in DebugRoutine
+%	\setbox255=\vbox to\vsize{\unvbox255\vss}\plainoutput}
+\output={\the\RejstrikOutput}
+
+%% Orignal code
+{% temporary handlers
+	\def\DebugOutputHandler#1{\IfLit '#1'='YES'{\SetDocParam[GridColor]={0 0 0 0.3}}%
+			{\SetDocParam[GridColor]={0 0 0 0}}}%
+	\SetDocParamPreHandler[DebugOutput]\DebugOutputHandler
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% helper macros - do not modify
+\def\hardvskip{\par\hbox{}\nobreak\vskip-\hardlineskip\vskip}
+\def\hardskiplines#1{\hardvskip#1\hardlineskip}
+% this skips the given amount of lines
+% part of the skip is soft (this is the biggest integral part of lines) - simple vskip
+% and the other part is hard - hardvskip - to keep radkovy rejstrik
+\def\softskiplines#1{%
+	% first expand the given argument
+	\edef\lbla{#1}%
+	% this is the soft part
+	%\message{the input is #1}%
+	%\message{the soft part is \ex\GetIntegerPart\ex[\lbla.]}%
+	\ex\vskip\ex\GetIntegerPart\ex[\lbla.]\hardlineskip
+	% this is the hard part
+	\ex\IfLit \ex'\ex\GetDecimalPart\ex[#1.]'=''{}{\ex\hardvskip\ex.\ex\GetDecimalPart\ex[\lbla.]\hardlineskip}%
+	%\message{the hard part is \ex\GetDecimalPart\ex[\lbla.]}%
+}
+
+\def\RecomputeTextHeight{%
+	%% calculating desired TextHeight
+	\hlpCount=\GetDocParam[NumberOfLines]%
+	\advance\hlpCount by-1\relax%
+	\hlpDim=\GetDocParam[HardLineSkip]%
+	\hlpDim=\hlpCount\hlpDim%
+	\advance\hlpDim by\GetDocParam[TopSkip]%
+	% for deep boxes on the last line (influenced by font parameters)
+	%\advance\hlpDim by\GetDocParam[HardLineSkip]%
+	% handler setting the right plain tex register will be invoked 'after'
+	\eSetDocParam[TextHeight]={\hlpDim}%
+}
+
+\def\RecomputeGridBox{%
+	% gridbox used in debug output routine
+	\global\setbox\gridBox=\vbox{%
+		\baselineskip=\GetDocParam[HardLineSkip]\relax%
+		\lineskiplimit=-\maxdimen
+		\hlpDim=\GetDocParam[HardLineSkip]\relax%
+		\hlpDim=.5\hlpDim
+		\domulti{\GetDocParam[NumberOfLines]}{\line{\hskip-.5cm\rlap{$^{\the\cyclecounter}$}%
+			\leaders\hrule height0pt depth.4pt\hskip .5cm%
+			\vrule height\hlpDim depth\hlpDim%
+			\leaders\hrule height0pt depth.4pt\hfill
+			\vrule height\hlpDim depth\hlpDim%
+			\leaders\hrule height0pt depth.4pt\hskip .5cm%
+			\hskip-.5cm%
+		}}}%
+}
+
+%% this needs to be prefixed, so the TextHeight handler can take its action after the assignment
+\PrefixEnviParam Document[PreActions]<{\RecomputeTextHeight}
+
+%% other preactions needed by radkovy rejstrik, these can be postfixed
+\PostfixEnviParam Document[PreActions]<{%
+	%\raggedbottom
+	\hardlineskip=\GetDocParam[HardLineSkip]%
+	\bigskipamount=\GetDocParam[HardLineSkip]%
+	\medskipamount=.5\bigskipamount
+	\RecomputeGridBox
+}
+
+\newcount\cyclecounter
+% 1 - kolikrat
+% 2 - telo
+\def\domulti#1#2{%
+	\cyclecounter=0%
+	\loop \ifnum\cyclecounter<#1 \advance\cyclecounter by1#2\repeat
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% style hacking {begin}
+% helper box
+\newbox\styleBox
+
+%% useful helper routines
+\def\SetCurrentStyleName#1{\ex\def\csname style::current::name\endcsname{#1}}
+\def\GetCurrentStyleName{\csname style::current::name\endcsname}
+\def\GetCurrentStyleParam[#1]{\GetStyleParam\GetCurrentStyleName[#1]}
+
+%% invokes handlers queued in a stack, params:
+% 1 - name of the stack
+% 2 - argument given to the handler (handler is a macro accepting one argument)
+\def\InvokeStackHandlers#1#2{\def\invokeHandler##1{##1{#2}}\ForEachStackElem{#1}\invokeHandler}
+
+%% macros manipulating with current style params
+\def\SetCurrentStyleFont{\SetFont{\GetCurrentStyleParam[Font]}}
+\def\SetCurrentStyleBaselineskip{\baselineskip=\GetCurrentStyleParam[LineSpacingFactor]\hardlineskip}
+\def\SetCurrentStyleFirstLineIndent{\parindent=\GetCurrentStyleParam[FirstLineIndent]}
+\def\SetCurrentStyleLeftRightSkip{%
+	\SetLeftRightSkip{\GetCurrentStyleParam[Alignment]}%
+			{\GetCurrentStyleParam[LeftIndent]}%
+			{\GetCurrentStyleParam[RightIndent]}}%
+\def\InvokeCurrentStylePreHandlers#1{\InvokeStackHandlers{\GetCurrentStyleParam[PreHandlerStackName]}{#1}}%
+\def\InvokeCurrentStylePostHandlers#1{\InvokeStackHandlers{\GetCurrentStyleParam[PostHandlerStackName]}{#1}}%
+
+
+%% params:
+% 1 - box cislo
+% 2 - nazev stylu textu v boxu
+\def\CompensateStyleBoxHeight#1#2{%
+	\CompensateBoxHeight{#1}{\GetStyleParam #2[LineSpacingFactor]}%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% style hack
+
+\def\printlineskipinfo#1{%
+	\message{style name #1, baselineskip is \the\baselineskip, lineskiplimit is \the\lineskiplimit,
+		\lineskip is \the\lineskip, hardlineskip is \the\hardlineskip, LineSpacingFactor is \GetCurrentStyleParam[LineSpacingFactor]}}
+
+\def\printcommonlineskipinfo{%
+	\message{baselineskip is \the\baselineskip, lineskiplimit is \the\lineskiplimit, \lineskip is \the\lineskip, hardlineskip is \the\hardlineskip}}
+
+%% skips computed amount of lines to make place for text of given
+% style in box (\styleBox), params:
+% 1 - \softlineskip or \lineskip (lineskip macro accepting the number of lines to skip)
+\def\SkipLinesForStyleBox#1{%
+	\ifdim\ht\styleBox>\hardlineskip
+		\hlpCount=\ht\styleBox
+		\divide\hlpCount by \hardlineskip
+		% cut off the first row - we are already on a position where the first row belongs
+		\advance\hlpCount by -1
+		%\message{skipping \the\hlpCount (\the\ht\styleBox div \the\hardlineskip - 1) lines}%
+		#1\hlpCount
+	\fi
+}
+
+%% vysazi dany text danym stylem
+% 1 - nazev stylu k pouziti
+% 2 - text vysazeny danym stylem
+\def\Style#1#2{%
+	\TestStyleExists{#1}%{Style #1 not found, declare it}%
+	\SetCurrentStyleName{#1}%
+	\GetCurrentStyleParam[PreActions]%
+	\IfLit '\GetCurrentStyleParam[Counter]'=''{}{\hIncrementCounter{\GetCurrentStyleParam[Counter]}}%
+	\setbox\styleBox=\vbox{\SetCurrentStyleFont
+		\SetCurrentStyleBaselineskip
+		\SetCurrentStyleFirstLineIndent
+		\SetCurrentStyleLeftRightSkip
+		\InvokeCurrentStylePreHandlers{#2}%
+		\indent\GetCurrentStyleParam[Prefix]#2\GetCurrentStyleParam[Postfix]%
+		\InvokeCurrentStylePostHandlers{#2}%
+		\par
+		\IfVar STYLE::#1EndPar='YES'{\par}{}}% end of group
+	%\message{style #1, text #2, before compensation: \the\ht\styleBox}%
+	\CompensateStyleBoxHeight{\styleBox}{\GetCurrentStyleName}%
+	%\message{after compensation: \the\ht\styleBox}%
+	\IfVar STYLE::#1SoftTopSpace='YES'{\let\nextaa\softskiplines}{\let\nextaa\hardskiplines}%
+	%\message{skipping hardcoded amount of lines \GetCurrentStyleParam[TopSkipLines]}%
+	\nextaa{\GetCurrentStyleParam[TopSkipLines]}%
+	\SkipLinesForStyleBox\hardskiplines
+	\box\styleBox%
+	\IfVar STYLE::#1BreakAllowed='NO'{\nobreak}{}%
+	\hardskiplines{\GetCurrentStyleParam[BottomSkipLines]}%
+	\IfVar STYLE::#1SuppresNextParIndent='YES'{\SuppresNextParIndent}{}%
+	\GetCurrentStyleParam[PostActions]%
+}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% style hacking {end}
+
+\LoadFile{rejstrik_settings.tex}

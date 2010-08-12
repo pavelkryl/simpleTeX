@@ -1,0 +1,32 @@
+\LoadPackage{docenvi}
+
+% document fonts based on:
+\SetFontFamily{Palatino}
+%\SetFontFamily{Avantgarde}
+\MkFontTenAlias{NormalFont}{Regular}{}
+\MkFontTenAlias{SmallFont}{Regular}{at 8pt}
+% colors
+\SetFontColor{NormalFont}{Black}
+
+% Document params
+\SetDocParam[Font]={NormalFont}
+\SetDocParam[FirstLineIndent]={0pt}
+\SetDocParam[ParSpacing]={1em}
+
+% initialization to default values
+\SetDocParam[PageLeftMargin]={1truein}
+\SetDocParam[PageTopMargin]={1truein}
+\SetDocParam[Font]={NormalFont}
+\SetDocParam[PageNumbering]={YES}
+\SetDocParam[Alignment]={block}
+\SetDocParam[LineSpacingFactor]={1.0}
+\SetDocParam[PageOrientation]={portrait}
+\SetDocParam[ColumnsTotal]={1}%
+\SetDocParam[ColumnSpacing]={10pt}%
+\SetDocParam[InterColumnLineWidth]={.4pt}%
+
+%\SetDocParam[Footer:Show]={YES}
+%\SetDocParam[Footer:Refresh]={YES}
+%\SetDocParam[Footer:Content:Left]={\ifodd\pageno\else\SetFont{NormalFont}\folio\fi}
+%\SetDocParam[Footer:Content:Right]={\ifodd\pageno\SetFont{NormalFont}\folio\fi}
+%\SetDocParam[Footer:Content:Center]={\MkInvisibleStrut{2cm}{0cm}}

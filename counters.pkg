@@ -1,0 +1,114 @@
+%% counter and operations on them
+
+%% leave it here
+\ex\newcount\csname counters::hlpCntr\endcsname
+\def\CounterCS{\csname counters::hlpCntr\endcsname}%
+
+%% declares new counter, initially sets value to zero, params:
+% 1 - name of the counter
+\def\DeclareCounter#1{%
+	\SetVar{Counters::Handler::#1}{}%
+	\SetVar{Counters::CNTR::#1}{0}}%
+
+%% declares new modulo counter, params:
+% 1 - counter name
+% 2 - modulo value
+\def\DeclareModuloCounter#1#2{%
+	\DeclareCounter{#1}%
+	\CounterCS=#2%
+	\advance\CounterCS by-1%
+	\eSetVar{Counters::Modulo-1::#1}{\the\CounterCS}%
+	\AddCounterHandler{#1}{\ModuloHandler{#1}{#2}}%
+}%
+
+%% handler checks whether the counter has reached its
+% modulo-1 value, if so, it sets the counter value to -1,
+% params:
+% 1 - counter name to be controlled
+% 2 - modulo value
+\def\ModuloHandler#1#2{%
+	%\message{this is modulo handler, mod=#2, value=\GetCounter{#1}}%
+	\IfCounter #1='\GetVar{Counters::Modulo-1::#1}'{\SetCounter{#1}{-1}}{}%
+}
+
+%% sets value of the counter, params:
+% 1 - name of the counter
+% 2 - value to be set
+\def\SetCounter#1#2{%
+	\IfSetVar{Counters::CNTR::#1}%
+		{\SetVar{Counters::CNTR::#1}{#2}}%
+		{\FatalErrMsg{Counter #1 not declared}}}%
+
+%% sets value of the counter, params:
+% 1 - name of the counter
+% 2 - value to be set
+\def\eSetCounter#1#2{%
+	\IfSetVar{Counters::CNTR::#1}%
+		{\eSetVar{Counters::CNTR::#1}{#2}}%
+		{\FatalErrMsg{Counter #1 not declared}}}%
+
+%% adds value to counter, to subtract, use negative value, params:
+% 1 - counetr name
+% 2 - value to be added
+\def\AddToCounter#1#2{%
+	\TestVarExists{Counters::CNTR::#1}%
+	\edef\hlp{\GetVar{Counters::CNTR::#1}}%
+	\CounterCS=\hlp
+	\advance \CounterCS by#2%
+	\eSetVar{Counters::CNTR::#1}{\the\CounterCS}}%
+
+%% increments counter by 1
+\def\IncrementCounter#1{\AddToCounter{#1}1}%
+%% decrements counter by 1
+\def\DecrementCounter#1{\AddToCounter{#1}{-1}}%
+
+%% resets counter to value 0
+\def\ResetCounter#1{\SetCounter{#1}0}%
+
+
+%% returns value of the counter, params:
+% 1 - name of the counter
+\def\GetCounter#1{%
+	\TestVarExists{Counters::CNTR::#1}%
+	\GetVar{Counters::CNTR::#1}}
+
+%% test equality of values
+\def\IfCounter#1='#2'#3#4{\IfVar Counters::CNTR::#1='#2'{#3}{#4}}
+
+%% associates handler with the given counter, this handler is called
+% each time, when hXXX operation is performed on this counter,
+% handlers can be associated multiple times, they are cumulative, params:
+% 1 - counter name
+% 2 - handler (CS): body is remembered not its name
+\def\AddCounterHandler#1#2{{%
+	\def\tmpA{\PostfixVar{Counters::Handler::#1}}%
+	\ex\tmpA\ex{#2}%
+}}
+
+
+%% tries to invoke counter handler, params:
+% 1 - counter name
+\def\InvokeCounterHandler#1{\GetVar{Counters::Handler::#1}}
+
+
+%% sets value of the counter, params:
+% 1 - name of the counter
+% 2 - value to be set
+\def\hSetCounter#1#2{%
+	\InvokeCounterHandler{#1}%
+	\SetCounter{#1}{#2}}
+
+%% adds value to counter, to subtract, use negative value, params:
+% 1 - counetr name
+% 2 - value to be added
+\def\hAddToCounter#1#2{%
+	\InvokeCounterHandler{#1}%
+	\AddToCounter{#1}{#2}}
+
+%% increments counter by 1
+\def\hIncrementCounter#1{\InvokeCounterHandler{#1}\IncrementCounter{#1}}%
+%% decrements counter by 1
+\def\hDecrementCounter#1{\InvokeCounterHandler{#1}\DeclareCounter{#1}}%
+
+%% resets counter to value 0
+\def\hResetCounter#1{\InvokeCounterHandler{#1}\ResetCounter{#1}}%

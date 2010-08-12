@@ -1,0 +1,39 @@
+\newtoks\macromaniptmpTOKS
+
+%% postfixes paramless macro #1 with #2
+\def\PostfixMacroBody#1#2{%
+	\ex\def\ex#1\ex{#1#2}%
+}
+
+%% postfixes body of macro #1 with totally expanded #2,
+% macro #1 must be parameterless macro
+\def\ePostfixMacroBody#1#2{%
+	\ex\macromaniptmpTOKS\ex=\ex{#1}%
+	\edef#1{\the\macromaniptmpTOKS #2}}%
+
+%%
+\def\PostfixMacroBodyParent#1#2{%
+	\ex\def\ex#1\ex{#1{#2}}}%
+
+%% prefixes body of macro #1 with string given in #2
+\def\PrefixMacroBody#1#2{%
+	\ex\def\ex#1\ex{\ex#2#1}
+}
+
+%%
+\def\ePostfixMacroBodyParent#1#2{%
+	\edef\postfix{#2}%
+	\def\macromaniptmpCS{\ex\def\ex#1\ex}%
+	\ex\macromaniptmpCS\ex{\ex#1\ex{\postfix}}%
+	\let\macromaniptmpCS=\undef}	% spare memory
+
+%% make left and right parenthesis around body of macro
+\def\ParentMacroBody#1{%
+	\ex\def\ex#1\ex{\ex{#1}}%
+}
+
+%%
+\def\DumpMacro#1{%
+	\ex\macromaniptmpTOKS\ex=\ex{#1}%
+	\message{macro \string#1 defined as \the\macromaniptmpTOKS}%
+}
